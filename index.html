@@ -256,6 +256,7 @@ h2{font-size:13px;font-weight:600;text-transform:uppercase;letter-spacing:.06em;
 .dot-btn.sm{width:18px;height:18px;border-width:2px}
 .pmore{border:0;background:none;color:var(--muted);font-size:18px;width:24px;padding:0;flex:none}
 .paper .rt-wrap{margin:4px 0;box-shadow:0 0 0 1px var(--line)}
+.paper .rt{min-height:0;padding:8px 12px}
 .paper .palette-row{padding:6px 0 8px 24px}
 /* checkbox right on the week card */
 .pl .pchk{display:inline-grid;width:14px;height:14px;border-radius:4px;font-size:10px;vertical-align:-2px;margin-right:4px}
@@ -1300,7 +1301,7 @@ function openDay(startDay){
         });
         h+=`<div class="pline add"><span class="pchk ghost"></span><span class="pn">${it.length+1})</span><span class="pt"><span class="ed" contenteditable="true" spellcheck="false" data-addp="${k}" data-ph="${it.length?'':'например, 08.30 Ирина'}"></span></span></div><div class="pline"></div>`;
       }
-      h+=`<div class="pline pp2">Заметка</div>${richEditor(note&&note.html,'Планы, мысли, что угодно…')}
+      h+=`${richEditor(note&&note.html,'Заметка: планы, мысли, что угодно…')}
         <div class="pline"></div><div class="pline"></div><div class="pline"></div></div>`;
       box.innerHTML=h;bindRich(box);
       if(focusPart){const f=box.querySelector(`[data-addp="${focusPart}"]`);if(f){f.focus()}}
