@@ -15,7 +15,7 @@
   --body:"Onest",-apple-system,system-ui,"Segoe UI",Roboto,sans-serif;
   --r:16px;
   /* planner paper stays light in both themes, like a real notebook */
-  --head:#F2E1E2; --paper:#FFFFFF; --paper-ink:#262122; --paper-line:#E6E1DD; --paper-muted:#8C807C;
+  --skin-bg:#F4EDE9; --head:#F2E1E2; --paper:#FFFFFF; --paper-ink:#262122; --paper-line:#E6E1DD; --paper-muted:#8C807C;
 }
 @media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
   --bg:#1D1718; --surface:#292122; --ink:#F2E8E6; --muted:#B3A19E; --line:#3A3031;
@@ -29,9 +29,9 @@
   --in:#8DBF90; --out:#E08A7E; --warn:#DDAE6C; --warn-soft:#3A2F1E;
   --scrim:rgba(0,0,0,.55); color-scheme:dark;
 }
-:root[data-skin="denim"]{--bg:#F0EEE9;--surface:#FFFEFB;--ink:#28313A;--muted:#707982;--line:#E0DED8;--accent:#5B7C9C;--accent-ink:#FFFFFF;--accent-soft:#E2E9F0;--head:#DCE5EE}
-:root[data-skin="cocoa"]{--bg:#F3ECE3;--surface:#FFFBF5;--ink:#3B2F27;--muted:#85766A;--line:#E5DACC;--accent:#8A6950;--accent-ink:#FFFFFF;--accent-soft:#EEE2D4;--head:#EADCCB}
-:root[data-skin="pine"]{--bg:#EEEFE8;--surface:#FDFDF8;--ink:#263029;--muted:#6E786F;--line:#DDE1D6;--accent:#4D6D57;--accent-ink:#FFFFFF;--accent-soft:#E0EAE1;--head:#DCE6DA}
+:root[data-skin="denim"]{--skin-bg:#F0EEE9;--bg:#F0EEE9;--surface:#FFFEFB;--ink:#28313A;--muted:#707982;--line:#E0DED8;--accent:#5B7C9C;--accent-ink:#FFFFFF;--accent-soft:#E2E9F0;--head:#DCE5EE}
+:root[data-skin="cocoa"]{--skin-bg:#F3ECE3;--bg:#F3ECE3;--surface:#FFFBF5;--ink:#3B2F27;--muted:#85766A;--line:#E5DACC;--accent:#8A6950;--accent-ink:#FFFFFF;--accent-soft:#EEE2D4;--head:#EADCCB}
+:root[data-skin="pine"]{--skin-bg:#EEEFE8;--bg:#EEEFE8;--surface:#FDFDF8;--ink:#263029;--muted:#6E786F;--line:#DDE1D6;--accent:#4D6D57;--accent-ink:#FFFFFF;--accent-soft:#E0EAE1;--head:#DCE6DA}
 @media (prefers-color-scheme: dark){
   :root[data-skin="denim"]:not([data-theme="light"]){--bg:#161B20;--surface:#20272E;--ink:#E9EEF2;--muted:#9AA6B1;--line:#2F3841;--accent:#93B1CF;--accent-ink:#161B20;--accent-soft:#263445}
   :root[data-skin="cocoa"]:not([data-theme="light"]){--bg:#1C1713;--surface:#28211B;--ink:#F1E9E0;--muted:#B2A496;--line:#3A3027;--accent:#C9A27F;--accent-ink:#1C1713;--accent-soft:#3E3125}
@@ -42,7 +42,7 @@
 :root[data-skin="pine"][data-theme="dark"]{--bg:#151A17;--surface:#1F2621;--ink:#E7EEE8;--muted:#9BA89E;--line:#2E3830;--accent:#8FB59A;--accent-ink:#151A17;--accent-soft:#26372B}
 *{box-sizing:border-box}
 [hidden]{display:none!important}
-body{background:var(--bg-img,none) center/cover fixed,var(--bg);color:var(--ink);font-family:var(--body);font-size:16px;line-height:1.4;-webkit-tap-highlight-color:transparent}
+body{background:linear-gradient(var(--bg-veil,transparent),var(--bg-veil,transparent)) fixed,var(--bg-img,none) center/cover fixed,var(--bg);color:var(--ink);font-family:var(--body);font-size:16px;line-height:1.4;-webkit-tap-highlight-color:transparent}
 button,input,select,textarea{font:inherit;color:inherit}
 button{cursor:pointer;touch-action:manipulation}
 :focus-visible{outline:2px solid var(--accent);outline-offset:2px}
@@ -67,7 +67,7 @@ h2{font-size:13px;font-weight:600;text-transform:uppercase;letter-spacing:.06em;
 .summary .label{font-size:13px;color:var(--muted)}
 .summary .big{font-family:var(--display);font-weight:700;font-size:32px;letter-spacing:-.02em;margin:2px 0 14px;overflow-wrap:anywhere}
 .split{display:grid;grid-template-columns:1fr 1fr;gap:10px}
-.split div{background:var(--bg);border-radius:12px;padding:10px 12px;min-width:0}
+.split div{background:var(--tile,var(--bg));border-radius:12px;padding:10px 12px;min-width:0}
 .split b{display:block;font-size:17px;font-weight:600;overflow-wrap:anywhere}
 .split .sub{display:block;font-size:12px;color:var(--muted);margin-top:2px}
 .pos{color:var(--in)} .neg{color:var(--out)}
@@ -162,6 +162,12 @@ h2{font-size:13px;font-weight:600;text-transform:uppercase;letter-spacing:.06em;
 
 /* appearance picker */
 .skins{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.tone{background:var(--surface);border-radius:16px;padding:12px 14px 6px;margin-bottom:12px;display:grid;gap:4px}
+.tone label{display:flex;justify-content:space-between;align-items:baseline;font-weight:600;font-size:15px}
+.tone label small{font-weight:400;font-size:12px;color:var(--muted)}
+.tone input[type=range]{width:100%;accent-color:var(--accent);margin:2px 0 10px;height:28px}
+.tone .link-btn{justify-self:start;color:var(--out);padding:4px 0 6px}
+.tone .link-btn.armed{font-weight:700}
 .skins.mini{grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}
 .skins.mini .skin{padding:7px;gap:5px;border-radius:13px}
 .skins.mini .skin b{font-size:13.5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
@@ -1459,22 +1465,37 @@ function openNote(s){
 const SKINS=[['pudra','Пудра','#F4EDE9','#B0707B','#F2E1E2'],['denim','Деним','#F0EEE9','#5B7C9C','#E2E9F0'],['cocoa','Какао','#F3ECE3','#8A6950','#EEE2D4'],['pine','Хвоя','#EEEFE8','#4D6D57','#E0EAE1']];
 /* more themes, one per "Фон приложения" colour: [key, name, background, accent, metallic sheen] */
 const MORE_SKINS=[
-  ['Пастель',[['milk','Молоко','#F2DDB0','#8A6420'],['beige','Беж','#E3B985','#8C5420'],['peach','Персик','#FFAD80','#C2410C'],['rosa','Роза','#FF9EB5','#C2185B'],['lav','Лаванда','#BBA0FF','#5B2BD6'],['sky','Небо','#8EC5FF','#1257B8'],['mint','Мята','#7FE3B5','#00875A'],['sage','Шалфей','#B4D98A','#3F7A12'],['fog','Туман','#B8BCD6','#3D4380'],['olive','Олива','#C2CC66','#5A6800']]],
-  ['Ярче',[['coral','Коралл','#FF7A59','#C92A0A'],['rasp','Малина','#FF5C93','#B5004A'],['fuchsia','Фуксия','#F04FD0','#9C0085'],['lilac','Сирень','#9D73FF','#5A16D9'],['azure','Небесный','#4FA8FF','#0055C7'],['teal','Бирюза','#2ED9BC','#007563'],['lime','Лайм','#A8E83C','#3C7A00'],['lemon','Лимон','#FFE01F','#8F6E00'],['apricot','Абрикос','#FF9F2E','#B85500']]],
-  ['Металлик',[['m-silver','Серебро','#C4CAD3','#566070','linear-gradient(135deg,#FFFFFF 0%,#A3ACB9 35%,#EEF1F5 55%,#8E98A6 80%,#DDE2E8 100%)'],['m-gold','Золото','#E8C25A','#8A6200','linear-gradient(135deg,#FFF1B8 0%,#D9A520 35%,#FFE27A 55%,#B8860B 80%,#F5D36B 100%)'],['m-rose','Розовое золото','#E9A592','#9C4632','linear-gradient(135deg,#FFE0D4 0%,#D4806A 35%,#F7C2B0 55%,#B9634D 80%,#EFB5A3 100%)'],['m-champ','Шампань','#E8CFA0','#87672C','linear-gradient(135deg,#FFF6E0 0%,#D6B377 40%,#F7E3BC 60%,#C29A55 85%,#F2DDB3 100%)'],['m-pearl','Перламутр','#E4D9F2','#6F5BAE','linear-gradient(135deg,#FFFFFF 0%,#D6C6F2 30%,#C4E4F0 55%,#F4D4E6 80%,#FFFFFF 100%)'],['m-bronze','Бронза','#C98E5C','#6E3C12','linear-gradient(135deg,#F2C9A0 0%,#A8673A 35%,#E0A776 55%,#8C5226 80%,#D49A68 100%)'],['m-plat','Платина','#D6D6D6','#55555C','linear-gradient(135deg,#FFFFFF 0%,#BDBDBD 40%,#F5F5F5 60%,#A8A8A8 85%,#ECECEC 100%)']]]
+  ['Пастель',[['milk','Молоко','#F8F6F1','#8C7B65'],['beige','Беж','#F1E8DC','#A07E5C'],['peach','Персик','#F6E6DC','#C27A55'],['rosa','Роза','#F1DFE1','#B9667A'],['lav','Лаванда','#ECE7F3','#8573B8'],['sky','Небо','#E6EDF4','#5A82AD'],['mint','Мята','#E4EFE9','#4E9478'],['sage','Шалфей','#E5EADD','#6E8A5A'],['fog','Туман','#E9E9EC','#6E7080'],['olive','Олива','#DCE0CC','#6F7A45']]],
+  ['Ярче',[['coral','Коралл','#F7B7A3','#C9492E'],['rasp','Малина','#F2A7BF','#BE3466'],['fuchsia','Фуксия','#EBA4D8','#A8338D'],['lilac','Сирень','#CDB8F0','#7046C6'],['azure','Небесный','#A9D2F5','#2A6FB8'],['teal','Бирюза','#A6E3D7','#127F70'],['lime','Лайм','#D4EBA0','#557F1A'],['lemon','Лимон','#F7E58F','#9A7C06'],['apricot','Абрикос','#F9C98F','#BB6614']]],
+  ['Металлик',[['m-silver','Серебро','#DADDE2','#6E7681','linear-gradient(135deg,#F5F6F8 0%,#C9CDD3 42%,#EEF0F2 68%,#BCC1C8 100%)'],['m-gold','Золото','#E7D3A1','#9C7728','linear-gradient(135deg,#F8EBC6 0%,#D9BC7A 42%,#F4E3B6 68%,#CBAD69 100%)'],['m-rose','Розовое золото','#E9C3B6','#A9675A','linear-gradient(135deg,#F9E1D8 0%,#DDA999 42%,#F5D5CA 68%,#D29B8A 100%)'],['m-champ','Шампань','#EFE2CC','#9A8056','linear-gradient(135deg,#FCF5E7 0%,#E2CDAA 48%,#F8ECD7 100%)'],['m-pearl','Перламутр','#EEE9F2','#8277AA','linear-gradient(135deg,#FFFDFF 0%,#E7DFF1 34%,#DCEBF0 66%,#F8EEF3 100%)'],['m-bronze','Бронза','#D9B391','#86552F','linear-gradient(135deg,#EDD1B4 0%,#C0936A 44%,#E3C19F 70%,#B88A61 100%)'],['m-plat','Платина','#E5E4E2','#6F6F76','linear-gradient(135deg,#FBFBFA 0%,#D4D3D0 50%,#F2F1EF 100%)']]]
 ];
 // every extra theme gets a light palette from its two colours and a matching dark twin
 (function(){
   let css='';
   for(const [,list] of MORE_SKINS)for(const [k,,bg,ac,img] of list){
-    const L=`--bg:${bg};--bg-img:${img||'none'};--surface:color-mix(in srgb,${bg} 55%,#FFFFFF);--ink:#2B2526;--muted:color-mix(in srgb,${ac} 40%,#4A4244);--line:color-mix(in srgb,${ac} 30%,${bg});--accent:${ac};--accent-ink:#FFFFFF;--accent-soft:color-mix(in srgb,${ac} 30%,#FFFFFF);--head:color-mix(in srgb,${ac} 55%,#FFFFFF)`;
+    const L=`--skin-bg:${bg};--bg:${bg};--bg-img:${img||'none'};--surface:color-mix(in srgb,${bg} 22%,#FFFFFF);--ink:#2B2526;--muted:color-mix(in srgb,${ac} 30%,#6E6668);--line:color-mix(in srgb,${ac} 14%,${bg});--accent:${ac};--accent-ink:#FFFFFF;--accent-soft:color-mix(in srgb,${ac} 16%,#FFFFFF);--head:color-mix(in srgb,${ac} 22%,#FFFFFF)`;
     const D=`--bg:color-mix(in srgb,${ac} 10%,#121014);--bg-img:none;--surface:color-mix(in srgb,${ac} 14%,#1C1A1E);--ink:#EEEAEC;--muted:#A9A2A6;--line:color-mix(in srgb,${ac} 22%,#2C2A30);--accent:color-mix(in srgb,${ac} 65%,#FFFFFF);--accent-ink:#121014;--accent-soft:color-mix(in srgb,${ac} 30%,#1C1A1E)`;
     css+=`:root[data-skin="${k}"]{${L}}@media (prefers-color-scheme: dark){:root[data-skin="${k}"]:not([data-theme="light"]){${D}}}:root[data-skin="${k}"][data-theme="dark"]{${D}}`;
   }
   const el=document.createElement('style');el.textContent=css;(document.head||document.body).appendChild(el);
 })();
+const getTone=()=>{try{return {bg:100,card:null,...JSON.parse(localStorage.getItem(LS_KEY+':tone')||'{}')}}catch(e){return {bg:100,card:null}}};
+// light mode only: background 0 = white, 100 = the theme as designed, 200 = deep; cards 0 = white, 100 = background colour
+function applyTone(t){
+  let css='';
+  if(+t.bg!==100){
+    const b=+t.bg;
+    css+=b<100?`--bg:color-mix(in srgb,var(--skin-bg) ${b}%,#FFFFFF);--bg-veil:rgba(255,255,255,${((100-b)/100).toFixed(2)});`
+              :`--bg:color-mix(in srgb,var(--skin-bg),var(--accent) ${Math.round((b-100)*0.55)}%);`;
+  }
+  if(t.card!=null)css+=`--surface:color-mix(in srgb,var(--skin-bg) ${+t.card}%,#FFFFFF);--tile:color-mix(in srgb,var(--skin-bg) ${Math.min(100,+t.card+30)}%,#FFFFFF);`;
+  let el=document.getElementById('tone-css');
+  if(!el){el=document.createElement('style');el.id='tone-css';const c=document.getElementById('custom-bg');c?c.before(el):(document.head||document.body).appendChild(el)}
+  el.textContent=css?`@media (prefers-color-scheme: light){html:root:not([data-theme="dark"]){${css}}}html:root[data-theme="light"]{${css}}`:'';
+}
 function applySkin(k){if(k&&k!=='pudra')document.documentElement.dataset.skin=k;else delete document.documentElement.dataset.skin}
 try{applySkin(localStorage.getItem(LS_KEY+':skin'))}catch(e){}
+applyTone(getTone());
 /* custom colours on top of the theme: background (light mode only), day headers, paper */
 const MET={
   silver:['#DADDE2','linear-gradient(135deg,#F5F6F8 0%,#C9CDD3 42%,#EEF0F2 68%,#BCC1C8 100%)'],
@@ -1525,7 +1546,12 @@ function openSkin(){
       ${g.groups.map(([gl,list])=>`<small>${gl}</small>`+list.map(o=>`<button class="${cur===o[0]?'on':''}" data-cc="${k}" data-v="${o[0]}" style="--c:${o[2]||o[0]};${o[3]?'background:'+o[3]:''}" aria-label="${o[1]}"></button>`).join('')).join('')}</div></div>`};
   const cur=document.documentElement.dataset.skin||'pudra';
   const last=lastBackup();
-  openSheet(`<h3>Настройки</h3><h2 style="margin-top:0">Оформление</h2><div class="skins">${SKINS.map(([k,n,bg,ac,soft])=>`<button class="skin ${k===cur?'on':''}" data-skin="${k}" style="--sbg:${bg};--sac:${ac};--ssoft:${soft}">
+  const tone=getTone();
+  openSheet(`<h3>Настройки</h3><h2 style="margin-top:0">Оформление</h2>
+    <div class="tone"><label for="tone-bg"><span>Фон</span><small>светлее · темнее</small></label><input type="range" id="tone-bg" min="0" max="200" step="5" value="${tone.bg}">
+      <label for="tone-card"><span>Карточки</span><small>белые · цветные</small></label><input type="range" id="tone-card" min="0" max="100" step="5" value="${tone.card==null?15:tone.card}">
+      <button class="link-btn" id="look-reset">Сбросить оформление</button></div>
+    <div class="skins">${SKINS.map(([k,n,bg,ac,soft])=>`<button class="skin ${k===cur?'on':''}" data-skin="${k}" style="--sbg:${bg};--sac:${ac};--ssoft:${soft}">
     <span class="skin-prev"><i></i><i></i><i></i></span><b>${n}</b></button>`).join('')}</div>
     ${MORE_SKINS.map(([gl,list])=>`<div class="skin-group">${gl}</div><div class="skins mini">${list.map(([k,n,bg,ac,img])=>`<button class="skin ${k===cur?'on':''}" data-skin="${k}" style="--sbg:${img?img+','+bg:bg};--sac:${ac};--ssoft:color-mix(in srgb,${ac} 18%,#FFFFFF)">
     <span class="skin-prev"><i></i><i></i><i></i></span><b>${n}</b></button>`).join('')}</div>`).join('')}
@@ -1544,6 +1570,12 @@ function openSkin(){
     <p class="hint">Удаляет все операции, клиентов, тренировки, события и заметки на этом телефоне. Тема останется. Перед сбросом можно сохранить копию.</p>
     <div class="actions"><button class="secondary" id="b-reset">Удалить все данные</button></div>`:''}`,
   panel=>{
+    panel.oninput=e=>{
+      if(e.target.id!=='tone-bg'&&e.target.id!=='tone-card')return;
+      const t=getTone();t[e.target.id==='tone-bg'?'bg':'card']=+e.target.value;
+      try{localStorage.setItem(LS_KEY+':tone',JSON.stringify(t))}catch(_){}
+      applyTone(t);
+    };
     panel.onchange=e=>{
       if(e.target.id!=='b-file'||!e.target.files[0])return;
       const r=new FileReader();r.onload=()=>{
@@ -1559,6 +1591,10 @@ function openSkin(){
       };r.readAsText(e.target.files[0]);
     };
     panel.onclick=e=>{
+      if(e.target.id==='look-reset'){
+        if(!e.target.classList.contains('armed')){e.target.classList.add('armed');e.target.textContent='Точно сбросить цвета? Нажмите ещё раз';return}
+        try{for(const k of [':skin',':colors',':tone'])localStorage.removeItem(LS_KEY+k)}catch(_){}
+        applySkin('');applyColors({});applyTone({bg:100,card:null});closeSheet();openSkin();toast('Оформление сброшено');return}
       if(e.target.id==='b-reset'){
         if(!e.target.classList.contains('armed')){e.target.classList.add('armed');e.target.textContent='Точно удалить всё? Нажмите ещё раз';return}
         S.data={tx:{},clients:{},tasks:{},alloc:{},workouts:{},daynotes:{},budget:null,flow:null};
