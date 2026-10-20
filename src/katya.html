@@ -247,6 +247,9 @@ h2{font-size:13px;font-weight:600;text-transform:uppercase;letter-spacing:.06em;
 /* calendar */
 .seg-v{width:172px;margin:0}
 .seg-v button{padding:7px}
+.top-cal{padding-block:2px 10px}
+.top-cal .seg-v{width:100%}
+.top-cal .seg-v button{padding:9px;font-size:16px}
 .cal{background:var(--surface);border-radius:20px;padding:10px 8px 6px}
 .cal .head{display:flex;justify-content:space-between;align-items:center;gap:6px;margin:0 4px 6px}
 .cal .head b{font-weight:600;flex:1;text-align:center}
@@ -1180,7 +1183,7 @@ const rtValue=root=>{const ed=root.querySelector('.rt');const h=cleanHtml(ed.inn
 function weekStartOf(s){const d=parseDay(s);d.setDate(d.getDate()-wdMon(d));return ymd(d)}
 function viewTasks(){
   const mode=S.calView||'month';
-  return `<div class="top"><h1>Дела</h1><div class="seg seg-v">${[['month','Месяц'],['week','Неделя']].map(([k,l])=>`<button data-act="cal-view" data-v="${k}" class="${mode===k?'on':''}">${l}</button>`).join('')}</div></div>`
+  return `<div class="top top-cal"><div class="seg seg-v">${[['month','Месяц'],['week','Неделя']].map(([k,l])=>`<button data-act="cal-view" data-v="${k}" class="${mode===k?'on':''}">${l}</button>`).join('')}</div></div>`
     +(mode==='week'?weekView():monthView());
 }
 function monthView(){
