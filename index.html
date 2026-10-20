@@ -31,6 +31,8 @@
   --display:"Lora",Georgia,"Times New Roman",serif;
   --body:"Onest",-apple-system,system-ui,"Segoe UI",Roboto,sans-serif;
   --r:16px;
+  /* planner paper stays light in both themes, like a real notebook */
+  --head:#F2E1E2; --paper:#FFFFFF; --paper-ink:#262122; --paper-line:#E6E1DD; --paper-muted:#8C807C;
 }
 @media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
   --bg:#1D1718; --surface:#292122; --ink:#F2E8E6; --muted:#B3A19E; --line:#3A3031;
@@ -44,9 +46,9 @@
   --in:#8DBF90; --out:#E08A7E; --warn:#DDAE6C; --warn-soft:#3A2F1E;
   --scrim:rgba(0,0,0,.55); color-scheme:dark;
 }
-:root[data-skin="denim"]{--bg:#F0EEE9;--surface:#FFFEFB;--ink:#28313A;--muted:#707982;--line:#E0DED8;--accent:#5B7C9C;--accent-ink:#FFFFFF;--accent-soft:#E2E9F0}
-:root[data-skin="cocoa"]{--bg:#F3ECE3;--surface:#FFFBF5;--ink:#3B2F27;--muted:#85766A;--line:#E5DACC;--accent:#8A6950;--accent-ink:#FFFFFF;--accent-soft:#EEE2D4}
-:root[data-skin="pine"]{--bg:#EEEFE8;--surface:#FDFDF8;--ink:#263029;--muted:#6E786F;--line:#DDE1D6;--accent:#4D6D57;--accent-ink:#FFFFFF;--accent-soft:#E0EAE1}
+:root[data-skin="denim"]{--bg:#F0EEE9;--surface:#FFFEFB;--ink:#28313A;--muted:#707982;--line:#E0DED8;--accent:#5B7C9C;--accent-ink:#FFFFFF;--accent-soft:#E2E9F0;--head:#DCE5EE}
+:root[data-skin="cocoa"]{--bg:#F3ECE3;--surface:#FFFBF5;--ink:#3B2F27;--muted:#85766A;--line:#E5DACC;--accent:#8A6950;--accent-ink:#FFFFFF;--accent-soft:#EEE2D4;--head:#EADCCB}
+:root[data-skin="pine"]{--bg:#EEEFE8;--surface:#FDFDF8;--ink:#263029;--muted:#6E786F;--line:#DDE1D6;--accent:#4D6D57;--accent-ink:#FFFFFF;--accent-soft:#E0EAE1;--head:#DCE6DA}
 @media (prefers-color-scheme: dark){
   :root[data-skin="denim"]:not([data-theme="light"]){--bg:#161B20;--surface:#20272E;--ink:#E9EEF2;--muted:#9AA6B1;--line:#2F3841;--accent:#93B1CF;--accent-ink:#161B20;--accent-soft:#263445}
   :root[data-skin="cocoa"]:not([data-theme="light"]){--bg:#1C1713;--surface:#28211B;--ink:#F1E9E0;--muted:#B2A496;--line:#3A3027;--accent:#C9A27F;--accent-ink:#1C1713;--accent-soft:#3E3125}
@@ -192,15 +194,15 @@ h2{font-size:13px;font-weight:600;text-transform:uppercase;letter-spacing:.06em;
 .wk-title small{font-size:12px;color:var(--muted)}
 .wk-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;align-items:start}
 .wk-col{display:grid;gap:10px;min-width:0}
-.pday{position:relative;cursor:pointer;display:block;width:100%;border:0;padding:0;text-align:left;background:var(--surface);border-radius:14px;overflow:hidden;box-shadow:0 1px 3px color-mix(in srgb,var(--ink) 10%,transparent);color:var(--ink)}
-.pday-h{display:flex;justify-content:space-between;align-items:center;gap:6px;padding:7px 9px 7px 11px;background:var(--accent-soft);font-size:15px;white-space:nowrap}
+.pday{position:relative;cursor:pointer;display:block;width:100%;border:0;padding:0;text-align:left;background:var(--paper);border-radius:14px;overflow:hidden;box-shadow:0 1px 3px rgba(0,0,0,.12);color:var(--paper-ink)}
+.pday-h{display:flex;justify-content:space-between;align-items:center;gap:6px;padding:7px 9px 7px 11px;background:var(--head);color:var(--paper-ink);font-size:15px;white-space:nowrap}
 .pday-h > span{overflow:hidden;text-overflow:ellipsis}
 .pday-h b{font-weight:700}
-.pday-h svg{width:16px;height:16px;flex:none;color:var(--muted)}
+.pday-h svg{width:16px;height:16px;flex:none;color:var(--paper-muted)}
 .pday.today .pday-h{box-shadow:inset 0 -2px 0 var(--out)}
 .pday.we .pday-h b{color:var(--out)}
 .tdot{display:inline-block;width:7px;height:7px;border-radius:50%;background:var(--out);margin-right:5px;vertical-align:2px}
-.pday-b{display:block;height:248px;overflow-y:auto;overscroll-behavior:contain;-webkit-overflow-scrolling:touch;scrollbar-width:none;padding:2px 10px 6px;font-size:13.5px;line-height:24px;background-image:repeating-linear-gradient(to bottom,transparent 0 23px,var(--line) 23px 24px);background-origin:content-box;background-attachment:local}
+.pday-b{display:block;height:248px;overflow-y:auto;overscroll-behavior:contain;-webkit-overflow-scrolling:touch;scrollbar-width:none;padding:2px 10px 6px;font-size:13.5px;line-height:24px;background-image:repeating-linear-gradient(to bottom,transparent 0 23px,var(--paper-line) 23px 24px);background-origin:content-box;background-attachment:local}
 .pday-b::-webkit-scrollbar{display:none}
 .pday.short .pday-b{height:104px}
 .pday-more{position:absolute;right:6px;bottom:6px;width:30px;height:22px;border:0;border-radius:11px;background:var(--out);color:#fff;font-size:16px;line-height:12px;padding:0 0 4px;opacity:0;pointer-events:none;transition:opacity .15s}
@@ -239,7 +241,7 @@ h2{font-size:13px;font-weight:600;text-transform:uppercase;letter-spacing:.06em;
 .ws.we b{color:var(--out)}
 .ws.today small{background:var(--out);color:#fff;border-radius:5px;padding:0 6px}
 .ws.sel{background:var(--accent-soft)}
-.paper{background:var(--surface);border-radius:16px;padding:6px 12px 10px;background-image:repeating-linear-gradient(to bottom,transparent 0 31px,var(--line) 31px 32px);background-origin:content-box;background-attachment:local}
+.paper{background:var(--paper);color:var(--paper-ink);border-radius:16px;padding:6px 12px 10px;background-image:repeating-linear-gradient(to bottom,transparent 0 31px,var(--paper-line) 31px 32px);background-origin:content-box;background-attachment:local}
 .pline{display:flex;align-items:center;gap:6px;height:32px;font-size:17px;line-height:32px}
 .pline.pp2{font-weight:700;letter-spacing:.04em;text-transform:uppercase;font-size:15px}
 .pchk{width:18px;height:18px;flex:none;border-radius:5px;border:1.5px solid color-mix(in srgb,var(--c,var(--muted)) 70%,var(--line));background:none;padding:0;display:grid;place-items:center;font-size:12px;font-weight:700;color:#fff;line-height:1}
@@ -255,7 +257,26 @@ h2{font-size:13px;font-weight:600;text-transform:uppercase;letter-spacing:.06em;
 .pline.done .hl{opacity:.65}
 .dot-btn.sm{width:18px;height:18px;border-width:2px}
 .pmore{border:0;background:none;color:var(--muted);font-size:18px;width:24px;padding:0;flex:none}
-.paper .rt-wrap{margin:4px 0;box-shadow:0 0 0 1px var(--line)}
+.paper .rt-wrap{margin:4px 0;box-shadow:0 0 0 1px var(--paper-line);background:var(--paper)}
+.paper .rt-bar{border-color:var(--paper-line)}
+.paper .rt-bar button{background:color-mix(in srgb,var(--paper-ink) 6%,var(--paper));color:var(--paper-ink)}
+.paper .rt:empty::before,.paper .ed[data-addp]:empty::before{color:var(--paper-muted)}
+.paper .pmore{color:var(--paper-muted)}
+.paper .pn{color:var(--paper-ink)}
+.pday .pchk,.paper .pchk{border-color:color-mix(in srgb,var(--c,var(--paper-muted)) 70%,var(--paper-line))}
+.pday .pchk.on,.paper .pchk.on{border-color:var(--c,var(--accent))}
+.cc-prev{display:grid;grid-template-columns:1fr 1fr;gap:8px;padding:12px;border-radius:14px;background:var(--bg);box-shadow:inset 0 0 0 1px var(--line);margin-bottom:12px}
+.cc-card{border-radius:10px;overflow:hidden;background:var(--paper);color:var(--paper-ink);box-shadow:0 1px 3px rgba(0,0,0,.12);font-size:12px}
+.cc-card b{display:block;background:var(--head);padding:5px 8px;font-weight:600}
+.cc-card span{display:block;height:20px;padding:0 8px;line-height:20px;border-bottom:1px solid var(--paper-line)}
+.cc-row{margin-bottom:12px}
+.cc-row > span{display:flex;justify-content:space-between;font-size:13px;color:var(--muted);margin:0 4px 6px}
+.cc-row > span b{color:var(--ink);font-weight:600}
+.cc-sw{display:flex;gap:10px;overflow-x:auto;padding:6px 6px 8px;scrollbar-width:none}
+.cc-sw::-webkit-scrollbar{display:none}
+.cc-sw button{flex:none;width:34px;height:34px;border-radius:50%;border:0;background:var(--c);box-shadow:inset 0 0 0 1px rgba(0,0,0,.12);padding:0;font-size:11px;color:var(--muted)}
+.cc-sw button.auto{background:var(--surface);box-shadow:inset 0 0 0 1.5px var(--line)}
+.cc-sw button.on{box-shadow:inset 0 0 0 1px rgba(0,0,0,.12),0 0 0 3px var(--bg),0 0 0 5px var(--accent)}
 .paper .rt{min-height:0;padding:8px 12px}
 .paper .palette-row{padding:6px 0 8px 24px}
 /* checkbox right on the week card */
@@ -1445,12 +1466,37 @@ function openNote(s){
 const SKINS=[['pudra','Пудра','#F4EDE9','#B0707B','#F2E1E2'],['denim','Деним','#F0EEE9','#5B7C9C','#E2E9F0'],['cocoa','Какао','#F3ECE3','#8A6950','#EEE2D4'],['pine','Хвоя','#EEEFE8','#4D6D57','#E0EAE1']];
 function applySkin(k){if(k&&k!=='pudra')document.documentElement.dataset.skin=k;else delete document.documentElement.dataset.skin}
 try{applySkin(localStorage.getItem(LS_KEY+':skin'))}catch(e){}
+/* custom colours on top of the theme: background (light mode only), day headers, paper */
+const CUSTOM={
+  bg:{label:'Фон',opts:[['#F4EDE9','Пудра'],['#F8F6F1','Молоко'],['#F1E8DC','Беж'],['#F6E6DC','Персик'],['#F1DFE1','Роза'],['#ECE7F3','Лаванда'],['#E6EDF4','Небо'],['#E4EFE9','Мята'],['#E5EADD','Шалфей'],['#E9E9EC','Туман'],['#E6D8CA','Какао'],['#DCE0CC','Олива']]},
+  head:{label:'Заголовки дней',opts:[['#F2E1E2','Пудра'],['#EACBD1','Роза'],['#F4D8C8','Персик'],['#EADCC4','Песок'],['#DCC8B6','Какао'],['#D9E3CF','Шалфей'],['#D3E6DC','Мята'],['#D4E2EF','Небо'],['#C3D2E2','Деним'],['#DDD5EE','Лаванда'],['#E6D3E8','Сирень'],['#E2E2E6','Серый']]},
+  paper:{label:'Листы в окошках',opts:[['#FFFFFF','Белый'],['#FFFCF5','Молоко'],['#FBF6EA','Слоновая кость'],['#FFF6F5','Розоватый'],['#F5F8FC','Голубоватый'],['#F4FAF6','Мятный'],['#F8F6FD','Лавандовый'],['#F3EADB','Крафт']]}
+};
+const getColors=()=>{try{return JSON.parse(localStorage.getItem(LS_KEY+':colors'))||{}}catch(e){return {}}};
+function applyColors(c){
+  const root=document.documentElement;
+  for(const k of ['head','paper'])c[k]?root.style.setProperty('--'+k,c[k]):root.style.removeProperty('--'+k);
+  let el=document.getElementById('custom-bg');
+  if(!el){el=document.createElement('style');el.id='custom-bg';(document.head||document.body).appendChild(el)}
+  el.textContent=c.bg?`@media (prefers-color-scheme: light){html:root:not([data-theme="dark"]){--bg:${c.bg}}}html:root[data-theme="light"]{--bg:${c.bg}}`:'';
+}
+applyColors(getColors());
+
 function openSkin(){
+  const colors=getColors();
+  const ccRow=k=>{const g=CUSTOM[k],cur=colors[k]||'',name=(g.opts.find(o=>o[0]===cur)||[])[1]||'по теме';
+    return `<div class="cc-row"><span>${g.label}<b data-ccname="${k}">${name}</b></span><div class="cc-sw">
+      <button class="auto ${cur?'':'on'}" data-cc="${k}" data-v="" aria-label="По теме">авто</button>
+      ${g.opts.map(([v,n])=>`<button class="${cur===v?'on':''}" data-cc="${k}" data-v="${v}" style="--c:${v}" aria-label="${n}"></button>`).join('')}</div></div>`};
   const cur=document.documentElement.dataset.skin||'pudra';
   const last=lastBackup();
   openSheet(`<h3>Настройки</h3><h2 style="margin-top:0">Оформление</h2><div class="skins">${SKINS.map(([k,n,bg,ac,soft])=>`<button class="skin ${k===cur?'on':''}" data-skin="${k}" style="--sbg:${bg};--sac:${ac};--ssoft:${soft}">
     <span class="skin-prev"><i></i><i></i><i></i></span><b>${n}</b></button>`).join('')}</div>
     <p class="hint">Тема сохраняется на этом телефоне. Тёмный вариант включается сам, когда на телефоне тёмный режим.</p>
+    <h2>Свои цвета</h2>
+    <div class="cc-prev"><div class="cc-card"><b>Понедельник 19</b><span>УТРО</span><span>1) 08.30 Ирина</span><span></span></div><div class="cc-card"><b>Четверг 22</b><span>ДЕНЬ</span><span>1) аренда</span><span></span></div></div>
+    ${ccRow('bg')}${ccRow('head')}${ccRow('paper')}
+    <p class="hint">Цвета ложатся поверх темы. Свой фон работает в светлом режиме телефона, в тёмном остаётся тёмный.</p>
     ${S.mode==='local'?`<h2>Резервная копия</h2>
     <div class="group stats"><div><span>Последняя копия</span><b>${last?when(last):'ещё не было'}</b></div></div>
     <p class="hint">Все данные хранятся только на этом телефоне. Сохраняйте копию раз в неделю и отправляйте её себе в Telegram или в «Файлы»: если телефон потеряется или сбросится, из копии всё вернётся.</p>
@@ -1482,6 +1528,11 @@ function openSkin(){
         try{localStorage.removeItem(LS_KEY);localStorage.removeItem(LS_KEY+':backup');localStorage.removeItem(LS_KEY+':pay')}catch(_){}
         S.month=S.calMonth=today().slice(0,7);S.selDay=today();
         closeSheet();render(true);toast('Все данные удалены');return}
+      const cc=e.target.closest('[data-cc]');
+      if(cc){const k=cc.dataset.cc,v=cc.dataset.v;if(v)colors[k]=v;else delete colors[k];
+        try{localStorage.setItem(LS_KEY+':colors',JSON.stringify(colors))}catch(_){}
+        applyColors(colors);panel.querySelectorAll(`[data-cc="${k}"]`).forEach(x=>x.classList.toggle('on',x===cc));
+        panel.querySelector(`[data-ccname="${k}"]`).textContent=v?CUSTOM[k].opts.find(o=>o[0]===v)[1]:'по теме';return}
       const b=e.target.closest('[data-skin]');if(!b)return;
     applySkin(b.dataset.skin);try{localStorage.setItem(LS_KEY+':skin',b.dataset.skin)}catch(_){}
     panel.querySelectorAll('[data-skin]').forEach(x=>x.classList.toggle('on',x===b))}});
