@@ -192,7 +192,7 @@ h2{font-size:13px;font-weight:600;text-transform:uppercase;letter-spacing:.06em;
 .wk-title small{font-size:12px;color:var(--muted)}
 .wk-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;align-items:start}
 .wk-col{display:grid;gap:10px;min-width:0}
-.pday{display:block;width:100%;border:0;padding:0;text-align:left;background:var(--surface);border-radius:14px;overflow:hidden;box-shadow:0 1px 3px color-mix(in srgb,var(--ink) 10%,transparent);color:var(--ink)}
+.pday{position:relative;cursor:pointer;display:block;width:100%;border:0;padding:0;text-align:left;background:var(--surface);border-radius:14px;overflow:hidden;box-shadow:0 1px 3px color-mix(in srgb,var(--ink) 10%,transparent);color:var(--ink)}
 .pday-h{display:flex;justify-content:space-between;align-items:center;gap:6px;padding:7px 9px 7px 11px;background:var(--accent-soft);font-size:15px;white-space:nowrap}
 .pday-h > span{overflow:hidden;text-overflow:ellipsis}
 .pday-h b{font-weight:700}
@@ -200,7 +200,11 @@ h2{font-size:13px;font-weight:600;text-transform:uppercase;letter-spacing:.06em;
 .pday.today .pday-h{box-shadow:inset 0 -2px 0 var(--out)}
 .pday.we .pday-h b{color:var(--out)}
 .tdot{display:inline-block;width:7px;height:7px;border-radius:50%;background:var(--out);margin-right:5px;vertical-align:2px}
-.pday-b{display:block;padding:2px 10px 6px;font-size:13.5px;line-height:24px;background-image:repeating-linear-gradient(to bottom,transparent 0 23px,var(--line) 23px 24px);background-origin:content-box}
+.pday-b{display:block;height:248px;overflow-y:auto;overscroll-behavior:contain;-webkit-overflow-scrolling:touch;scrollbar-width:none;padding:2px 10px 6px;font-size:13.5px;line-height:24px;background-image:repeating-linear-gradient(to bottom,transparent 0 23px,var(--line) 23px 24px);background-origin:content-box;background-attachment:local}
+.pday-b::-webkit-scrollbar{display:none}
+.pday.short .pday-b{height:104px}
+.pday-more{position:absolute;right:6px;bottom:6px;width:30px;height:22px;border:0;border-radius:11px;background:var(--out);color:#fff;font-size:16px;line-height:12px;padding:0 0 4px;opacity:0;pointer-events:none;transition:opacity .15s}
+.pday.has-more .pday-more{opacity:.9;pointer-events:auto}
 .pp{display:block;font-size:11.5px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;height:24px}
 .pl{display:block;height:24px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .hl{background:color-mix(in srgb,var(--c) 30%,transparent);border-radius:3px;padding:1px 3px;-webkit-box-decoration-break:clone;box-decoration-break:clone}
@@ -524,7 +528,9 @@ function render(force){
   const last=lastBackup(), hasData=Object.keys(S.data.tx).length+Object.keys(S.data.clients).length+Object.keys(S.data.tasks).length>0;
   bn.hidden=!(S.mode==='local'&&hasData&&(!last||Date.now()-last>7*864e5));
   if(!bn.hidden)bn.innerHTML=`${last?'Последняя резервная копия '+when(last)+'.':'Резервной копии ещё не было.'} Все данные хранятся только на этом телефоне. <button class="link-btn" data-act="backup-save" style="padding:2px 0;color:inherit;text-decoration:underline">Сохранить копию</button>`;
+  const keep={};document.querySelectorAll('.pday-b').forEach(b=>keep[b.dataset.sday]=b.scrollTop);
   $('#view').innerHTML=S.tab==='money'?viewMoney():S.tab==='clients'?viewClients():viewTasks();
+  document.querySelectorAll('.pday-b').forEach(b=>{if(keep[b.dataset.sday])b.scrollTop=keep[b.dataset.sday];updMore(b)});
 }
 document.addEventListener('focusout',()=>setTimeout(()=>{if(S.dirty&&!editing())render()},0));
 setInterval(()=>render(),60000);
@@ -1195,6 +1201,10 @@ function parseLine(str){
   return {time:'',title:String(str).trim()};
 }
 const sortItems=(a,b)=>(a.time||'99').localeCompare(b.time||'99')||(a.createdAt||0)-(b.createdAt||0);
+// "more below" arrow on a day card, like the paper planner's
+function updMore(b){b.parentElement.classList.toggle('has-more',b.scrollTop+b.clientHeight<b.scrollHeight-4)}
+document.addEventListener('scroll',e=>{const t=e.target;if(t.classList&&t.classList.contains('pday-b'))updMore(t)},true);
+document.addEventListener('keydown',e=>{if(e.key==='Enter'&&e.target.classList&&e.target.classList.contains('pday'))e.target.click()});
 function isoWeek(d){const t=new Date(d.getFullYear(),d.getMonth(),d.getDate()+3-wdMon(d));const j=new Date(t.getFullYear(),0,4);return 1+Math.round(((t-j)/864e5-3+wdMon(j))/7)}
 function weekView(){
   const td=today(),ws=S.weekStart||weekStartOf(S.selDay),a=parseDay(ws),mid=new Date(a);mid.setDate(a.getDate()+3);
@@ -1202,13 +1212,15 @@ function weekView(){
     const d=new Date(a);d.setDate(a.getDate()+i);const s=ymd(d),evs=eventsOn(s),note=S.data.daynotes[s];
     const body=PARTS.map(([k,l])=>{
       const it=evs.filter(e=>partOf(e)===k).sort(sortItems);
-      return `<span class="pp">${l}</span>`+(it.length?it.map((e,j)=>{const dn=isDone(e,s);
-        return `<span class="pl ${dn?'done':''}">${j+1}) <span class="hl" style="--c:${evColor(e.color)}">${esc(itemText(e))}${dn?' ✓':''}</span></span>`}).join(''):'<span class="pl"></span>');
+      return `<span class="pp">${l}</span>`+it.map((e,j)=>{const dn=isDone(e,s);
+        return `<span class="pl ${dn?'done':''}">${j+1}) <span class="hl" style="--c:${evColor(e.color)}">${esc(itemText(e))}${dn?' ✓':''}</span></span>`}).join('')
+        +'<span class="pl"></span>'.repeat(Math.max(1,2-it.length));
     }).join('');
-    return `<button class="pday ${s===td?'today':''} ${i>4?'we':''}" data-act="day-open" data-day="${s}" aria-label="${dayTitle(s)}, открыть">
+    return `<div class="pday ${s===td?'today':''} ${i>4?'we short':''}" data-act="day-open" data-day="${s}" role="button" tabindex="0" aria-label="${dayTitle(s)}, открыть">
       <span class="pday-h"><span>${s===td?'<i class="tdot"></i>':''}${WD_FULL[i]} <b>${d.getDate()}</b></span>
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M14 4h6v6M20 4l-6 6M10 20H4v-6M4 20l6-6"/></svg></span>
-      <span class="pday-b">${body}${note&&note.html?`<span class="pnote">${cleanHtml(note.html)}</span>`:''}</span></button>`;
+      <div class="pday-b" data-sday="${s}">${body}${note&&note.html?`<div class="pnote">${cleanHtml(note.html)}</div>`:''}</div>
+      <button class="pday-more" data-act="pday-down" aria-label="Листать ниже">⌄</button></div>`;
   };
   return `<section class="cal week-head"><div class="head" style="margin:0"><button class="icon-btn" data-act="w-prev" aria-label="Прошлая неделя">‹</button>
     <span class="wk-title"><b>${MONTHS[mid.getMonth()]} ${mid.getFullYear()}</b><small>Неделя ${isoWeek(a)}</small></span>
@@ -1481,6 +1493,7 @@ document.addEventListener('click',e=>{
     case 'cal-view':S.calView=el.dataset.v;S.weekStart=weekStartOf(S.selDay);try{localStorage.setItem(LS_KEY+':cal',S.calView)}catch(_){};render(true);break;
     case 'w-prev':case 'w-next':{const d=parseDay(S.weekStart||weekStartOf(S.selDay));d.setDate(d.getDate()+(el.dataset.act==='w-next'?7:-7));S.weekStart=ymd(d);render(true);break}
     case 'day-open':openDay(el.dataset.day);break;
+    case 'pday-down':{const bd=el.parentElement.querySelector('.pday-b');bd.scrollBy({top:96,behavior:'smooth'});break}
     case 'ev-new':openEvent(null,el.dataset.day);break;
     case 'ev-open':openEvent(id,el.dataset.day);break;
     case 'note-open':openNote(el.dataset.day);break;
