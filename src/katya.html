@@ -42,7 +42,7 @@
 :root[data-skin="pine"][data-theme="dark"]{--bg:#151A17;--surface:#1F2621;--ink:#E7EEE8;--muted:#9BA89E;--line:#2E3830;--accent:#8FB59A;--accent-ink:#151A17;--accent-soft:#26372B}
 *{box-sizing:border-box}
 [hidden]{display:none!important}
-body{background:var(--bg);color:var(--ink);font-family:var(--body);font-size:16px;line-height:1.4;-webkit-tap-highlight-color:transparent}
+body{background:var(--bg-img,none) center/cover fixed,var(--bg);color:var(--ink);font-family:var(--body);font-size:16px;line-height:1.4;-webkit-tap-highlight-color:transparent}
 button,input,select,textarea{font:inherit;color:inherit}
 button{cursor:pointer;touch-action:manipulation}
 :focus-visible{outline:2px solid var(--accent);outline-offset:2px}
@@ -177,8 +177,8 @@ h2{font-size:13px;font-weight:600;text-transform:uppercase;letter-spacing:.06em;
 .wk-title small{font-size:12px;color:var(--muted)}
 .wk-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;align-items:start}
 .wk-col{display:grid;gap:10px;min-width:0}
-.pday{position:relative;cursor:pointer;display:block;width:100%;border:0;padding:0;text-align:left;background:var(--paper);border-radius:14px;overflow:hidden;box-shadow:0 1px 3px rgba(0,0,0,.12);color:var(--paper-ink)}
-.pday-h{display:flex;justify-content:space-between;align-items:center;gap:6px;padding:7px 9px 7px 11px;background:var(--head);color:var(--paper-ink);font-size:15px;white-space:nowrap}
+.pday{position:relative;cursor:pointer;display:block;width:100%;border:0;padding:0;text-align:left;background:var(--paper-img,none),var(--paper);border-radius:14px;overflow:hidden;box-shadow:0 1px 3px rgba(0,0,0,.12);color:var(--paper-ink)}
+.pday-h{display:flex;justify-content:space-between;align-items:center;gap:6px;padding:7px 9px 7px 11px;background:var(--head-img,none),var(--head);color:var(--paper-ink);font-size:15px;white-space:nowrap}
 .pday-h > span{overflow:hidden;text-overflow:ellipsis}
 .pday-h b{font-weight:700}
 .pday-h svg{width:16px;height:16px;flex:none;color:var(--paper-muted)}
@@ -224,7 +224,7 @@ h2{font-size:13px;font-weight:600;text-transform:uppercase;letter-spacing:.06em;
 .ws.we b{color:var(--out)}
 .ws.today small{background:var(--out);color:#fff;border-radius:5px;padding:0 6px}
 .ws.sel{background:var(--accent-soft)}
-.paper{background:var(--paper);color:var(--paper-ink);border-radius:16px;padding:6px 12px 10px;background-image:repeating-linear-gradient(to bottom,transparent 0 31px,var(--paper-line) 31px 32px);background-origin:content-box;background-attachment:local}
+.paper{background-color:var(--paper);color:var(--paper-ink);border-radius:16px;padding:6px 12px 10px;background-image:repeating-linear-gradient(to bottom,transparent 0 31px,var(--paper-line) 31px 32px),var(--paper-img,none);background-origin:content-box;background-attachment:local}
 .pline{display:flex;align-items:center;gap:6px;height:32px;font-size:17px;line-height:32px}
 .pline.pp2{font-weight:700;letter-spacing:.04em;text-transform:uppercase;font-size:15px}
 .pchk{width:18px;height:18px;flex:none;border-radius:5px;border:1.5px solid color-mix(in srgb,var(--c,var(--muted)) 70%,var(--line));background:none;padding:0;display:grid;place-items:center;font-size:12px;font-weight:700;color:#fff;line-height:1}
@@ -248,15 +248,18 @@ h2{font-size:13px;font-weight:600;text-transform:uppercase;letter-spacing:.06em;
 .paper .pn{color:var(--paper-ink)}
 .pday .pchk,.paper .pchk{border-color:color-mix(in srgb,var(--c,var(--paper-muted)) 70%,var(--paper-line))}
 .pday .pchk.on,.paper .pchk.on{border-color:var(--c,var(--accent))}
-.cc-prev{display:grid;grid-template-columns:1fr 1fr;gap:8px;padding:12px;border-radius:14px;background:var(--bg);box-shadow:inset 0 0 0 1px var(--line);margin-bottom:12px}
-.cc-card{border-radius:10px;overflow:hidden;background:var(--paper);color:var(--paper-ink);box-shadow:0 1px 3px rgba(0,0,0,.12);font-size:12px}
-.cc-card b{display:block;background:var(--head);padding:5px 8px;font-weight:600}
+.cc-prev{display:grid;grid-template-columns:1fr 1fr;gap:8px;padding:12px;border-radius:14px;background:var(--bg-img,none) center/cover,var(--bg);box-shadow:inset 0 0 0 1px var(--line);margin-bottom:12px}
+.cc-card{border-radius:10px;overflow:hidden;background:var(--paper-img,none),var(--paper);color:var(--paper-ink);box-shadow:0 1px 3px rgba(0,0,0,.12);font-size:12px}
+.cc-card b{display:block;background:var(--head-img,none),var(--head);padding:5px 8px;font-weight:600}
+.cc-app{grid-column:1/-1;border-radius:10px;background:var(--surface);color:var(--ink);padding:8px 10px;font-size:12px;display:flex;justify-content:space-between}
+.cc-app b{font-family:var(--display);font-size:15px}
 .cc-card span{display:block;height:20px;padding:0 8px;line-height:20px;border-bottom:1px solid var(--paper-line)}
 .cc-row{margin-bottom:12px}
 .cc-row > span{display:flex;justify-content:space-between;font-size:13px;color:var(--muted);margin:0 4px 6px}
 .cc-row > span b{color:var(--ink);font-weight:600}
 .cc-sw{display:flex;gap:10px;overflow-x:auto;padding:6px 6px 8px;scrollbar-width:none}
 .cc-sw::-webkit-scrollbar{display:none}
+.cc-sw small{flex:none;align-self:center;font-size:10px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);writing-mode:vertical-rl;transform:rotate(180deg);padding:0 2px;border-left:1px solid var(--line)}
 .cc-sw button{flex:none;width:34px;height:34px;border-radius:50%;border:0;background:var(--c);box-shadow:inset 0 0 0 1px rgba(0,0,0,.12);padding:0;font-size:11px;color:var(--muted)}
 .cc-sw button.auto{background:var(--surface);box-shadow:inset 0 0 0 1.5px var(--line)}
 .cc-sw button.on{box-shadow:inset 0 0 0 1px rgba(0,0,0,.12),0 0 0 3px var(--bg),0 0 0 5px var(--accent)}
@@ -273,9 +276,10 @@ h2{font-size:13px;font-weight:600;text-transform:uppercase;letter-spacing:.06em;
 .top-cal .seg-v{width:100%}
 .top-cal .seg-v button{padding:9px;font-size:16px}
 .cal{background:var(--surface);border-radius:20px;padding:10px 8px 6px}
-.cal .head{display:flex;justify-content:space-between;align-items:center;gap:6px;margin:0 4px 6px}
+.cal .head{display:flex;justify-content:space-between;align-items:center;gap:6px;margin:0 0 6px;padding:4px;border-radius:14px;background:var(--head-img,none),var(--head);color:var(--paper-ink)}
 .cal .head b{font-weight:600;flex:1;text-align:center}
-.cal .head .icon-btn{background:var(--bg)}
+.cal .head .icon-btn{background:rgba(255,255,255,.6);color:var(--paper-ink)}
+.cal .head small{color:var(--paper-muted)}
 .grid{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));text-align:center}
 .grid .wd{font-size:12px;color:var(--muted);padding:4px 0 6px}
 .grid .wd.we{color:var(--out)}
@@ -304,7 +308,8 @@ h2{font-size:13px;font-weight:600;text-transform:uppercase;letter-spacing:.06em;
 .note-card{display:block;width:100%;text-align:left;border:0;background:var(--surface);border-radius:var(--r);padding:12px 14px;font-size:15px;line-height:1.45;max-height:240px;overflow:hidden;overflow-wrap:anywhere;color:var(--ink)}
 .note-add{display:block;width:100%;text-align:left;border:1.5px dashed var(--line);background:none;border-radius:var(--r);padding:14px;color:var(--muted);font-size:15px}
 .note-card ul,.rt ul{padding-left:20px;margin:4px 0}
-.week-head{padding:8px;margin-bottom:10px}
+.week-head{padding:0;margin-bottom:10px;background:none}
+.week-head .head{margin:0}
 .wday{background:var(--surface);border-radius:var(--r);margin-bottom:10px;overflow:hidden}
 .wday.today{box-shadow:inset 0 0 0 1.5px var(--accent)}
 .wd-h{display:flex;justify-content:space-between;align-items:center;padding:6px 8px 6px 14px}
@@ -1450,36 +1455,62 @@ const SKINS=[['pudra','Пудра','#F4EDE9','#B0707B','#F2E1E2'],['denim','Де
 function applySkin(k){if(k&&k!=='pudra')document.documentElement.dataset.skin=k;else delete document.documentElement.dataset.skin}
 try{applySkin(localStorage.getItem(LS_KEY+':skin'))}catch(e){}
 /* custom colours on top of the theme: background (light mode only), day headers, paper */
-const CUSTOM={
-  bg:{label:'Фон',opts:[['#F4EDE9','Пудра'],['#F8F6F1','Молоко'],['#F1E8DC','Беж'],['#F6E6DC','Персик'],['#F1DFE1','Роза'],['#ECE7F3','Лаванда'],['#E6EDF4','Небо'],['#E4EFE9','Мята'],['#E5EADD','Шалфей'],['#E9E9EC','Туман'],['#E6D8CA','Какао'],['#DCE0CC','Олива']]},
-  head:{label:'Заголовки дней',opts:[['#F2E1E2','Пудра'],['#EACBD1','Роза'],['#F4D8C8','Персик'],['#EADCC4','Песок'],['#DCC8B6','Какао'],['#D9E3CF','Шалфей'],['#D3E6DC','Мята'],['#D4E2EF','Небо'],['#C3D2E2','Деним'],['#DDD5EE','Лаванда'],['#E6D3E8','Сирень'],['#E2E2E6','Серый']]},
-  paper:{label:'Листы в окошках',opts:[['#FFFFFF','Белый'],['#FFFCF5','Молоко'],['#FBF6EA','Слоновая кость'],['#FFF6F5','Розоватый'],['#F5F8FC','Голубоватый'],['#F4FAF6','Мятный'],['#F8F6FD','Лавандовый'],['#F3EADB','Крафт']]}
+const MET={
+  silver:['#DADDE2','linear-gradient(135deg,#F5F6F8 0%,#C9CDD3 42%,#EEF0F2 68%,#BCC1C8 100%)'],
+  gold:['#E7D3A1','linear-gradient(135deg,#F8EBC6 0%,#D9BC7A 42%,#F4E3B6 68%,#CBAD69 100%)'],
+  rose:['#E9C3B6','linear-gradient(135deg,#F9E1D8 0%,#DDA999 42%,#F5D5CA 68%,#D29B8A 100%)'],
+  champ:['#EFE2CC','linear-gradient(135deg,#FCF5E7 0%,#E2CDAA 48%,#F8ECD7 100%)'],
+  pearl:['#EEE9F2','linear-gradient(135deg,#FFFDFF 0%,#E7DFF1 34%,#DCEBF0 66%,#F8EEF3 100%)'],
+  bronze:['#D9B391','linear-gradient(135deg,#EDD1B4 0%,#C0936A 44%,#E3C19F 70%,#B88A61 100%)'],
+  plat:['#E5E4E2','linear-gradient(135deg,#FBFBFA 0%,#D4D3D0 50%,#F2F1EF 100%)']
 };
+const METN={silver:'Серебро',gold:'Золото',rose:'Розовое золото',champ:'Шампань',pearl:'Перламутр',bronze:'Бронза',plat:'Платина'};
+const metal=keys=>keys.map(k=>['m:'+k,METN[k],MET[k][0],MET[k][1]]);
+const CUSTOM={
+  bg:{label:'Фон приложения',groups:[
+    ['Пастель',[['#F4EDE9','Пудра'],['#F8F6F1','Молоко'],['#F1E8DC','Беж'],['#F6E6DC','Персик'],['#F1DFE1','Роза'],['#ECE7F3','Лаванда'],['#E6EDF4','Небо'],['#E4EFE9','Мята'],['#E5EADD','Шалфей'],['#E9E9EC','Туман'],['#E6D8CA','Какао'],['#DCE0CC','Олива']]],
+    ['Ярче',[['#F7B7A3','Коралл'],['#F2A7BF','Малина'],['#EBA4D8','Фуксия'],['#CDB8F0','Сирень'],['#A9D2F5','Небесный'],['#A6E3D7','Бирюза'],['#D4EBA0','Лайм'],['#F7E58F','Лимон'],['#F9C98F','Абрикос']]],
+    ['Металлик',metal(['silver','gold','rose','champ','pearl','bronze','plat'])]]},
+  head:{label:'Заголовки и плашки',groups:[
+    ['Пастель',[['#F2E1E2','Пудра'],['#EACBD1','Роза'],['#F4D8C8','Персик'],['#EADCC4','Песок'],['#DCC8B6','Какао'],['#D9E3CF','Шалфей'],['#D3E6DC','Мята'],['#D4E2EF','Небо'],['#C3D2E2','Деним'],['#DDD5EE','Лаванда'],['#E6D3E8','Сирень'],['#E2E2E6','Серый']]],
+    ['Ярче',[['#F49C86','Коралл'],['#EE8FB0','Малина'],['#E38BCB','Фуксия'],['#B9A0EC','Сирень'],['#8EC3F0','Небесный'],['#84D6C6','Бирюза'],['#C3E07F','Лайм'],['#F3D86B','Лимон'],['#F6B56E','Абрикос']]],
+    ['Металлик',metal(['silver','gold','rose','champ','pearl','bronze','plat'])]]},
+  paper:{label:'Карточки и листы',groups:[
+    ['Пастель',[['#FFFFFF','Белый'],['#FFFCF5','Молоко'],['#FBF6EA','Слоновая кость'],['#FFF6F5','Розоватый'],['#F5F8FC','Голубоватый'],['#F4FAF6','Мятный'],['#F8F6FD','Лавандовый'],['#F3EADB','Крафт']]],
+    ['Ярче',[['#FFE9E3','Коралловый'],['#FFE6EF','Малиновый'],['#F1EAFF','Сиреневый'],['#E6F3FF','Небесный'],['#E3F8F3','Бирюзовый'],['#F2FADF','Лаймовый'],['#FFF8D6','Лимонный'],['#FFEFDC','Абрикосовый']]],
+    ['Металлик',metal(['silver','champ','pearl','plat','rose','gold'])]]}
+};
+function findColor(k,v){for(const [,list] of CUSTOM[k].groups)for(const o of list)if(o[0]===v)return {c:o[2]||o[0],img:o[3]||'',name:o[1]};return null}
 const getColors=()=>{try{return JSON.parse(localStorage.getItem(LS_KEY+':colors'))||{}}catch(e){return {}}};
+// planner headers and paper are light objects in both themes; background and app cards change only in light mode
 function applyColors(c){
-  const root=document.documentElement;
-  for(const k of ['head','paper'])c[k]?root.style.setProperty('--'+k,c[k]):root.style.removeProperty('--'+k);
+  const root=document.documentElement,f={};for(const k of ['bg','head','paper'])f[k]=c[k]&&findColor(k,c[k]);
+  for(const k of ['head','paper']){
+    f[k]?root.style.setProperty('--'+k,f[k].c):root.style.removeProperty('--'+k);
+    f[k]&&f[k].img?root.style.setProperty('--'+k+'-img',f[k].img):root.style.removeProperty('--'+k+'-img');
+  }
+  const light=[f.bg?'--bg:'+f.bg.c:'',f.bg&&f.bg.img?'--bg-img:'+f.bg.img:'',f.paper?'--surface:'+f.paper.c:''].filter(Boolean).join(';');
   let el=document.getElementById('custom-bg');
   if(!el){el=document.createElement('style');el.id='custom-bg';(document.head||document.body).appendChild(el)}
-  el.textContent=c.bg?`@media (prefers-color-scheme: light){html:root:not([data-theme="dark"]){--bg:${c.bg}}}html:root[data-theme="light"]{--bg:${c.bg}}`:'';
+  el.textContent=light?`@media (prefers-color-scheme: light){html:root:not([data-theme="dark"]){${light}}}html:root[data-theme="light"]{${light}}`:'';
 }
 applyColors(getColors());
 
 function openSkin(){
   const colors=getColors();
-  const ccRow=k=>{const g=CUSTOM[k],cur=colors[k]||'',name=(g.opts.find(o=>o[0]===cur)||[])[1]||'по теме';
-    return `<div class="cc-row"><span>${g.label}<b data-ccname="${k}">${name}</b></span><div class="cc-sw">
-      <button class="auto ${cur?'':'on'}" data-cc="${k}" data-v="" aria-label="По теме">авто</button>
-      ${g.opts.map(([v,n])=>`<button class="${cur===v?'on':''}" data-cc="${k}" data-v="${v}" style="--c:${v}" aria-label="${n}"></button>`).join('')}</div></div>`};
+  const ccRow=k=>{const g=CUSTOM[k],cur=colors[k]||'',fc=cur&&findColor(k,cur);
+    return `<div class="cc-row"><span>${g.label}<b data-ccname="${k}">${fc?fc.name:'по теме'}</b></span><div class="cc-sw">
+      <button class="auto ${fc?'':'on'}" data-cc="${k}" data-v="" aria-label="По теме">авто</button>
+      ${g.groups.map(([gl,list])=>`<small>${gl}</small>`+list.map(o=>`<button class="${cur===o[0]?'on':''}" data-cc="${k}" data-v="${o[0]}" style="--c:${o[2]||o[0]};${o[3]?'background:'+o[3]:''}" aria-label="${o[1]}"></button>`).join('')).join('')}</div></div>`};
   const cur=document.documentElement.dataset.skin||'pudra';
   const last=lastBackup();
   openSheet(`<h3>Настройки</h3><h2 style="margin-top:0">Оформление</h2><div class="skins">${SKINS.map(([k,n,bg,ac,soft])=>`<button class="skin ${k===cur?'on':''}" data-skin="${k}" style="--sbg:${bg};--sac:${ac};--ssoft:${soft}">
     <span class="skin-prev"><i></i><i></i><i></i></span><b>${n}</b></button>`).join('')}</div>
     <p class="hint">Тема сохраняется на этом телефоне. Тёмный вариант включается сам, когда на телефоне тёмный режим.</p>
     <h2>Свои цвета</h2>
-    <div class="cc-prev"><div class="cc-card"><b>Понедельник 19</b><span>УТРО</span><span>1) 08.30 Ирина</span><span></span></div><div class="cc-card"><b>Четверг 22</b><span>ДЕНЬ</span><span>1) аренда</span><span></span></div></div>
+    <div class="cc-prev"><div class="cc-app"><span>Бюджет октября</span><b>120 000 ₽</b></div><div class="cc-card"><b>Понедельник 19</b><span>УТРО</span><span>1) 08.30 Ирина</span><span></span></div><div class="cc-card"><b>Четверг 22</b><span>ДЕНЬ</span><span>1) аренда</span><span></span></div></div>
     ${ccRow('bg')}${ccRow('head')}${ccRow('paper')}
-    <p class="hint">Цвета ложатся поверх темы. Свой фон работает в светлом режиме телефона, в тёмном остаётся тёмный.</p>
+    <p class="hint">Цвета действуют во всём приложении, поверх темы. Фон и карточки меняются в светлом режиме телефона, в тёмном остаются тёмными. Заголовки дней и листы в «Делах» светлые всегда, как бумага.</p>
     ${S.mode==='local'?`<h2>Резервная копия</h2>
     <div class="group stats"><div><span>Последняя копия</span><b>${last?when(last):'ещё не было'}</b></div></div>
     <p class="hint">Все данные хранятся только на этом телефоне. Сохраняйте копию раз в неделю и отправляйте её себе в Telegram или в «Файлы»: если телефон потеряется или сбросится, из копии всё вернётся.</p>
@@ -1515,7 +1546,7 @@ function openSkin(){
       if(cc){const k=cc.dataset.cc,v=cc.dataset.v;if(v)colors[k]=v;else delete colors[k];
         try{localStorage.setItem(LS_KEY+':colors',JSON.stringify(colors))}catch(_){}
         applyColors(colors);panel.querySelectorAll(`[data-cc="${k}"]`).forEach(x=>x.classList.toggle('on',x===cc));
-        panel.querySelector(`[data-ccname="${k}"]`).textContent=v?CUSTOM[k].opts.find(o=>o[0]===v)[1]:'по теме';return}
+        panel.querySelector(`[data-ccname="${k}"]`).textContent=v?findColor(k,v).name:'по теме';return}
       const b=e.target.closest('[data-skin]');if(!b)return;
     applySkin(b.dataset.skin);try{localStorage.setItem(LS_KEY+':skin',b.dataset.skin)}catch(_){}
     panel.querySelectorAll('[data-skin]').forEach(x=>x.classList.toggle('on',x===b))}});
