@@ -32,7 +32,7 @@
   --body:"Onest",-apple-system,system-ui,"Segoe UI",Roboto,sans-serif;
   --r:16px;
   /* planner paper stays light in both themes, like a real notebook */
-  --skin-bg:#F4EDE9; --head:#F2E1E2; --paper:#FFFFFF; --paper-ink:#262122; --paper-line:#E6E1DD; --paper-muted:#8C807C;
+  --skin-bg:#F4EDE9; --skin-accent:#B0707B; --head:#F2E1E2; --paper:#FFFFFF; --paper-ink:#262122; --paper-line:#E6E1DD; --paper-muted:#8C807C;
 }
 @media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
   --bg:#1D1718; --surface:#292122; --ink:#F2E8E6; --muted:#B3A19E; --line:#3A3031;
@@ -46,9 +46,9 @@
   --in:#8DBF90; --out:#E08A7E; --warn:#DDAE6C; --warn-soft:#3A2F1E;
   --scrim:rgba(0,0,0,.55); color-scheme:dark;
 }
-:root[data-skin="denim"]{--skin-bg:#F0EEE9;--bg:#F0EEE9;--surface:#FFFEFB;--ink:#28313A;--muted:#707982;--line:#E0DED8;--accent:#5B7C9C;--accent-ink:#FFFFFF;--accent-soft:#E2E9F0;--head:#DCE5EE}
-:root[data-skin="cocoa"]{--skin-bg:#F3ECE3;--bg:#F3ECE3;--surface:#FFFBF5;--ink:#3B2F27;--muted:#85766A;--line:#E5DACC;--accent:#8A6950;--accent-ink:#FFFFFF;--accent-soft:#EEE2D4;--head:#EADCCB}
-:root[data-skin="pine"]{--skin-bg:#EEEFE8;--bg:#EEEFE8;--surface:#FDFDF8;--ink:#263029;--muted:#6E786F;--line:#DDE1D6;--accent:#4D6D57;--accent-ink:#FFFFFF;--accent-soft:#E0EAE1;--head:#DCE6DA}
+:root[data-skin="denim"]{--skin-bg:#F0EEE9;--skin-accent:#5B7C9C;--bg:#F0EEE9;--surface:#FFFEFB;--ink:#28313A;--muted:#707982;--line:#E0DED8;--accent:#5B7C9C;--accent-ink:#FFFFFF;--accent-soft:#E2E9F0;--head:#DCE5EE}
+:root[data-skin="cocoa"]{--skin-bg:#F3ECE3;--skin-accent:#8A6950;--bg:#F3ECE3;--surface:#FFFBF5;--ink:#3B2F27;--muted:#85766A;--line:#E5DACC;--accent:#8A6950;--accent-ink:#FFFFFF;--accent-soft:#EEE2D4;--head:#EADCCB}
+:root[data-skin="pine"]{--skin-bg:#EEEFE8;--skin-accent:#4D6D57;--bg:#EEEFE8;--surface:#FDFDF8;--ink:#263029;--muted:#6E786F;--line:#DDE1D6;--accent:#4D6D57;--accent-ink:#FFFFFF;--accent-soft:#E0EAE1;--head:#DCE6DA}
 @media (prefers-color-scheme: dark){
   :root[data-skin="denim"]:not([data-theme="light"]){--bg:#161B20;--surface:#20272E;--ink:#E9EEF2;--muted:#9AA6B1;--line:#2F3841;--accent:#93B1CF;--accent-ink:#161B20;--accent-soft:#263445}
   :root[data-skin="cocoa"]:not([data-theme="light"]){--bg:#1C1713;--surface:#28211B;--ink:#F1E9E0;--muted:#B2A496;--line:#3A3027;--accent:#C9A27F;--accent-ink:#1C1713;--accent-soft:#3E3125}
@@ -1489,22 +1489,28 @@ const MORE_SKINS=[
 (function(){
   let css='';
   for(const [,list] of MORE_SKINS)for(const [k,,bg,ac,img] of list){
-    const L=`--skin-bg:${bg};--bg:${bg};--bg-img:${img||'none'};--surface:color-mix(in srgb,${bg} 22%,#FFFFFF);--ink:#2B2526;--muted:color-mix(in srgb,${ac} 30%,#6E6668);--line:color-mix(in srgb,${ac} 14%,${bg});--accent:${ac};--accent-ink:#FFFFFF;--accent-soft:color-mix(in srgb,${ac} 16%,#FFFFFF);--head:color-mix(in srgb,${ac} 22%,#FFFFFF)`;
+    const L=`--skin-bg:${bg};--skin-accent:${ac};--bg:${bg};--bg-img:${img||'none'};--surface:color-mix(in srgb,${bg} 22%,#FFFFFF);--ink:#2B2526;--muted:color-mix(in srgb,${ac} 30%,#6E6668);--line:color-mix(in srgb,${ac} 14%,${bg});--accent:${ac};--accent-ink:#FFFFFF;--accent-soft:color-mix(in srgb,${ac} 16%,#FFFFFF);--head:color-mix(in srgb,${ac} 22%,#FFFFFF)`;
     const D=`--bg:color-mix(in srgb,${ac} 10%,#121014);--bg-img:none;--surface:color-mix(in srgb,${ac} 14%,#1C1A1E);--ink:#EEEAEC;--muted:#A9A2A6;--line:color-mix(in srgb,${ac} 22%,#2C2A30);--accent:color-mix(in srgb,${ac} 65%,#FFFFFF);--accent-ink:#121014;--accent-soft:color-mix(in srgb,${ac} 30%,#1C1A1E)`;
     css+=`:root[data-skin="${k}"]{${L}}@media (prefers-color-scheme: dark){:root[data-skin="${k}"]:not([data-theme="light"]){${D}}}:root[data-skin="${k}"][data-theme="dark"]{${D}}`;
   }
   const el=document.createElement('style');el.textContent=css;(document.head||document.body).appendChild(el);
 })();
-const getTone=()=>{try{return {bg:100,card:null,...JSON.parse(localStorage.getItem(LS_KEY+':tone')||'{}')}}catch(e){return {bg:100,card:null}}};
+const getTone=()=>{try{return {bg:100,sat:100,card:null,...JSON.parse(localStorage.getItem(LS_KEY+':tone')||'{}')}}catch(e){return {bg:100,card:null}}};
 // light mode only: background 0 = white, 100 = the theme as designed, 200 = deep; cards 0 = white, 100 = background colour
+const RELATIVE_OK=(()=>{try{return CSS.supports('color','oklch(from red l c h)')}catch(e){return false}})();
+// light mode only. bg: 0 white · 100 as designed · 200 deep. sat: 0 grey · 100 as designed · 200 vivid. cards: 0 white · 100 background colour
 function applyTone(t){
+  const b=+t.bg,k=(+t.sat||100)/100,sat=RELATIVE_OK&&k!==1;
+  let bg=b===100?'var(--skin-bg)':b<100?`color-mix(in srgb,var(--skin-bg) ${b}%,#FFFFFF)`:`color-mix(in srgb,var(--skin-bg),var(--skin-accent) ${Math.round((b-100)*0.55)}%)`;
   let css='';
-  if(+t.bg!==100){
-    const b=+t.bg;
-    css+=b<100?`--bg:color-mix(in srgb,var(--skin-bg) ${b}%,#FFFFFF);--bg-veil:rgba(255,255,255,${((100-b)/100).toFixed(2)});`
-              :`--bg:color-mix(in srgb,var(--skin-bg),var(--accent) ${Math.round((b-100)*0.55)}%);`;
+  if(sat){
+    bg=`oklch(from ${bg} l calc(c * ${k}) h)`;
+    const ac=`oklch(from var(--skin-accent) l calc(c * ${k}) h)`;
+    css+=`--accent:${ac};--accent-soft:color-mix(in srgb,${ac} 18%,#FFFFFF);--head:color-mix(in srgb,${ac} 26%,#FFFFFF);--line:color-mix(in srgb,${ac} 16%,var(--bg));`;
   }
-  if(t.card!=null)css+=`--surface:color-mix(in srgb,var(--skin-bg) ${+t.card}%,#FFFFFF);--tile:color-mix(in srgb,var(--skin-bg) ${Math.min(100,+t.card+30)}%,#FFFFFF);`;
+  if(b!==100||sat)css+=`--bg:${bg};`;
+  if(b<100)css+=`--bg-veil:rgba(255,255,255,${((100-b)/100).toFixed(2)});`;
+  if(t.card!=null||sat||b!==100){const c=t.card==null?22:+t.card;css+=`--surface:color-mix(in srgb,var(--bg) ${c}%,#FFFFFF);--tile:color-mix(in srgb,var(--bg) ${Math.min(100,c+35)}%,#FFFFFF);`}
   let el=document.getElementById('tone-css');
   if(!el){el=document.createElement('style');el.id='tone-css';const c=document.getElementById('custom-bg');c?c.before(el):(document.head||document.body).appendChild(el)}
   el.textContent=css?`@media (prefers-color-scheme: light){html:root:not([data-theme="dark"]){${css}}}html:root[data-theme="light"]{${css}}`:'';
@@ -1565,6 +1571,7 @@ function openSkin(){
   const tone=getTone();
   openSheet(`<h3>Настройки</h3><h2 style="margin-top:0">Оформление</h2>
     <div class="tone"><label for="tone-bg"><span>Фон</span><small>светлее · темнее</small></label><input type="range" id="tone-bg" min="0" max="200" step="5" value="${tone.bg}">
+      <label for="tone-sat"><span>Насыщенность</span><small>спокойнее · ярче</small></label><input type="range" id="tone-sat" min="0" max="200" step="5" value="${tone.sat||100}">
       <label for="tone-card"><span>Карточки</span><small>белые · цветные</small></label><input type="range" id="tone-card" min="0" max="100" step="5" value="${tone.card==null?15:tone.card}">
       <button class="link-btn" id="look-reset">Сбросить оформление</button></div>
     <div class="skins">${SKINS.map(([k,n,bg,ac,soft])=>`<button class="skin ${k===cur?'on':''}" data-skin="${k}" style="--sbg:${bg};--sac:${ac};--ssoft:${soft}">
@@ -1587,8 +1594,8 @@ function openSkin(){
     <div class="actions"><button class="secondary" id="b-reset">Удалить все данные</button></div>`:''}`,
   panel=>{
     panel.oninput=e=>{
-      if(e.target.id!=='tone-bg'&&e.target.id!=='tone-card')return;
-      const t=getTone();t[e.target.id==='tone-bg'?'bg':'card']=+e.target.value;
+      const key={'tone-bg':'bg','tone-sat':'sat','tone-card':'card'}[e.target.id];if(!key)return;
+      const t=getTone();t[key]=+e.target.value;
       try{localStorage.setItem(LS_KEY+':tone',JSON.stringify(t))}catch(_){}
       applyTone(t);
     };
@@ -1610,7 +1617,7 @@ function openSkin(){
       if(e.target.id==='look-reset'){
         if(!e.target.classList.contains('armed')){e.target.classList.add('armed');e.target.textContent='Точно сбросить цвета? Нажмите ещё раз';return}
         try{for(const k of [':skin',':colors',':tone'])localStorage.removeItem(LS_KEY+k)}catch(_){}
-        applySkin('');applyColors({});applyTone({bg:100,card:null});closeSheet();openSkin();toast('Оформление сброшено');return}
+        applySkin('');applyColors({});applyTone({bg:100,sat:100,card:null});closeSheet();openSkin();toast('Оформление сброшено');return}
       if(e.target.id==='b-reset'){
         if(!e.target.classList.contains('armed')){e.target.classList.add('armed');e.target.textContent='Точно удалить всё? Нажмите ещё раз';return}
         S.data={tx:{},clients:{},tasks:{},alloc:{},workouts:{},daynotes:{},budget:null,flow:null};
