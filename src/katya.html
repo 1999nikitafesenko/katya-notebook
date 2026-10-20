@@ -67,7 +67,7 @@ h2{font-size:13px;font-weight:600;text-transform:uppercase;letter-spacing:.06em;
 .summary .label{font-size:13px;color:var(--muted)}
 .summary .big{font-family:var(--display);font-weight:700;font-size:32px;letter-spacing:-.02em;margin:2px 0 14px;overflow-wrap:anywhere}
 .split{display:grid;grid-template-columns:1fr 1fr;gap:10px}
-.split div{background:var(--bg);border-radius:12px;padding:10px 12px;min-width:0}
+.split div{background:var(--tile,var(--bg));border-radius:12px;padding:10px 12px;min-width:0}
 .split b{display:block;font-size:17px;font-weight:600;overflow-wrap:anywhere}
 .split .sub{display:block;font-size:12px;color:var(--muted);margin-top:2px}
 .pos{color:var(--in)} .neg{color:var(--out)}
@@ -132,8 +132,8 @@ h2{font-size:13px;font-weight:600;text-transform:uppercase;letter-spacing:.06em;
 .cname small.today{color:var(--warn)}
 .stepper{display:flex;align-items:center;gap:6px}
 .stepper button{width:44px;height:44px;border-radius:12px;border:0;font-size:24px;font-weight:500;line-height:1;display:grid;place-items:center}
-.stepper .dec{background:var(--accent-soft);color:var(--accent)}
-.stepper .inc{background:var(--bg);color:var(--ink)}
+.stepper .dec{background:var(--dec-img,none),var(--dec-bg,var(--accent-soft));color:var(--dec-fg,var(--accent))}
+.stepper .inc{background:var(--inc-img,none),var(--inc-bg,var(--bg));color:var(--inc-fg,var(--ink))}
 .stepper button:active{transform:scale(.94)}
 .stepper input{width:56px;height:44px;text-align:center;border:1.5px solid var(--line);border-radius:12px;background:var(--surface);font-size:20px;font-weight:700;font-variant-numeric:tabular-nums;-moz-appearance:textfield}
 .stepper input::-webkit-outer-spin-button,.stepper input::-webkit-inner-spin-button{-webkit-appearance:none;margin:0}
@@ -251,7 +251,20 @@ h2{font-size:13px;font-weight:600;text-transform:uppercase;letter-spacing:.06em;
 .cc-prev{display:grid;grid-template-columns:1fr 1fr;gap:8px;padding:12px;border-radius:14px;background:var(--bg-img,none) center/cover,var(--bg);box-shadow:inset 0 0 0 1px var(--line);margin-bottom:12px}
 .cc-card{border-radius:10px;overflow:hidden;background:var(--paper-img,none),var(--paper);color:var(--paper-ink);box-shadow:0 1px 3px rgba(0,0,0,.12);font-size:12px}
 .cc-card b{display:block;background:var(--head-img,none),var(--head);padding:5px 8px;font-weight:600}
-.cc-app{grid-column:1/-1;border-radius:10px;background:var(--surface);color:var(--ink);padding:8px 10px;font-size:12px;display:flex;justify-content:space-between}
+.cc-app{grid-column:1/-1;border-radius:10px;background:var(--surface);color:var(--ink);padding:8px 10px;font-size:12px;display:grid;gap:6px}
+.cc-app .r{display:flex;justify-content:space-between;align-items:center;gap:8px}
+.cc-pill{background:var(--accent);color:var(--accent-ink);border-radius:999px;padding:4px 10px;font-weight:600;font-size:11px}
+.cc-tiles{display:grid;grid-template-columns:1fr 1fr;gap:6px}
+.cc-tiles span{background:var(--tile,var(--bg));border-radius:8px;padding:4px 7px;color:var(--muted)}
+.cc-tiles b{display:block;font-size:12px}
+.cc-step{display:flex;align-items:center;gap:4px}
+.cc-step i{width:24px;height:24px;border-radius:7px;display:grid;place-items:center;font-style:normal;font-weight:600;font-size:15px}
+.cc-step i.d{background:var(--dec-img,none),var(--dec-bg,var(--accent-soft));color:var(--dec-fg,var(--accent))}
+.cc-step i.u{background:var(--inc-img,none),var(--inc-bg,var(--bg));color:var(--inc-fg,var(--ink))}
+.cc-step em{font-style:normal;font-weight:700;width:24px;text-align:center}
+.cc-bar{grid-column:1/-1;display:flex;justify-content:space-around;border-radius:10px;padding:6px;font-size:11px;color:var(--muted);background:var(--bar-img,none),var(--bar,var(--surface))}
+.cc-bar .on{color:var(--accent);font-weight:600}
+.cc-sec{margin:14px 4px 6px;font-size:12px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--accent)}
 .cc-app b{font-family:var(--display);font-size:15px}
 .cc-card span{display:block;height:20px;padding:0 8px;line-height:20px;border-bottom:1px solid var(--paper-line)}
 .cc-row{margin-bottom:12px}
@@ -339,7 +352,7 @@ h2{font-size:13px;font-weight:600;text-transform:uppercase;letter-spacing:.06em;
 .rt:empty::before{content:attr(data-ph);color:var(--muted)}
 
 /* tab bar, fab */
-.tabbar{position:fixed;left:0;right:0;bottom:0;z-index:20;background:color-mix(in srgb,var(--surface) 88%,transparent);backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px);border-top:1px solid var(--line);display:flex;justify-content:center;padding:6px max(16px,env(safe-area-inset-right,0px)) calc(6px + env(safe-area-inset-bottom,0px)) max(16px,env(safe-area-inset-left,0px))}
+.tabbar{position:fixed;left:0;right:0;bottom:0;z-index:20;background:var(--bar-img,none),color-mix(in srgb,var(--bar,var(--surface)) 90%,transparent);backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px);border-top:1px solid var(--line);display:flex;justify-content:center;padding:6px max(16px,env(safe-area-inset-right,0px)) calc(6px + env(safe-area-inset-bottom,0px)) max(16px,env(safe-area-inset-left,0px))}
 .tabbar .in{display:grid;grid-template-columns:repeat(4,1fr);width:100%;max-width:560px}
 .tab{border:0;background:none;display:flex;flex-direction:column;align-items:center;gap:2px;padding:6px 0;font-size:12px;font-weight:500;color:var(--muted)}
 .tab svg{width:26px;height:26px}
@@ -1466,51 +1479,73 @@ const MET={
 };
 const METN={silver:'Серебро',gold:'Золото',rose:'Розовое золото',champ:'Шампань',pearl:'Перламутр',bronze:'Бронза',plat:'Платина'};
 const metal=keys=>keys.map(k=>['m:'+k,METN[k],MET[k][0],MET[k][1]]);
-const CUSTOM={
-  bg:{label:'Фон приложения',groups:[
-    ['Пастель',[['#F4EDE9','Пудра'],['#F8F6F1','Молоко'],['#F1E8DC','Беж'],['#F6E6DC','Персик'],['#F1DFE1','Роза'],['#ECE7F3','Лаванда'],['#E6EDF4','Небо'],['#E4EFE9','Мята'],['#E5EADD','Шалфей'],['#E9E9EC','Туман'],['#E6D8CA','Какао'],['#DCE0CC','Олива']]],
-    ['Ярче',[['#F7B7A3','Коралл'],['#F2A7BF','Малина'],['#EBA4D8','Фуксия'],['#CDB8F0','Сирень'],['#A9D2F5','Небесный'],['#A6E3D7','Бирюза'],['#D4EBA0','Лайм'],['#F7E58F','Лимон'],['#F9C98F','Абрикос']]],
-    ['Металлик',metal(['silver','gold','rose','champ','pearl','bronze','plat'])]]},
-  head:{label:'Заголовки и плашки',groups:[
-    ['Пастель',[['#F2E1E2','Пудра'],['#EACBD1','Роза'],['#F4D8C8','Персик'],['#EADCC4','Песок'],['#DCC8B6','Какао'],['#D9E3CF','Шалфей'],['#D3E6DC','Мята'],['#D4E2EF','Небо'],['#C3D2E2','Деним'],['#DDD5EE','Лаванда'],['#E6D3E8','Сирень'],['#E2E2E6','Серый']]],
-    ['Ярче',[['#F49C86','Коралл'],['#EE8FB0','Малина'],['#E38BCB','Фуксия'],['#B9A0EC','Сирень'],['#8EC3F0','Небесный'],['#84D6C6','Бирюза'],['#C3E07F','Лайм'],['#F3D86B','Лимон'],['#F6B56E','Абрикос']]],
-    ['Металлик',metal(['silver','gold','rose','champ','pearl','bronze','plat'])]]},
-  paper:{label:'Карточки и листы',groups:[
-    ['Пастель',[['#FFFFFF','Белый'],['#FFFCF5','Молоко'],['#FBF6EA','Слоновая кость'],['#FFF6F5','Розоватый'],['#F5F8FC','Голубоватый'],['#F4FAF6','Мятный'],['#F8F6FD','Лавандовый'],['#F3EADB','Крафт']]],
-    ['Ярче',[['#FFE9E3','Коралловый'],['#FFE6EF','Малиновый'],['#F1EAFF','Сиреневый'],['#E6F3FF','Небесный'],['#E3F8F3','Бирюзовый'],['#F2FADF','Лаймовый'],['#FFF8D6','Лимонный'],['#FFEFDC','Абрикосовый']]],
-    ['Металлик',metal(['silver','champ','pearl','plat','rose','gold'])]]}
-};
-function findColor(k,v){for(const [,list] of CUSTOM[k].groups)for(const o of list)if(o[0]===v)return {c:o[2]||o[0],img:o[3]||'',name:o[1]};return null}
+const P_BG=[['#F4EDE9','Пудра'],['#F8F6F1','Молоко'],['#F1E8DC','Беж'],['#F6E6DC','Персик'],['#F1DFE1','Роза'],['#ECE7F3','Лаванда'],['#E6EDF4','Небо'],['#E4EFE9','Мята'],['#E5EADD','Шалфей'],['#E9E9EC','Туман'],['#E6D8CA','Какао'],['#DCE0CC','Олива']];
+const B_BG=[['#F7B7A3','Коралл'],['#F2A7BF','Малина'],['#EBA4D8','Фуксия'],['#CDB8F0','Сирень'],['#A9D2F5','Небесный'],['#A6E3D7','Бирюза'],['#D4EBA0','Лайм'],['#F7E58F','Лимон'],['#F9C98F','Абрикос']];
+const P_HEAD=[['#F2E1E2','Пудра'],['#EACBD1','Роза'],['#F4D8C8','Персик'],['#EADCC4','Песок'],['#DCC8B6','Какао'],['#D9E3CF','Шалфей'],['#D3E6DC','Мята'],['#D4E2EF','Небо'],['#C3D2E2','Деним'],['#DDD5EE','Лаванда'],['#E6D3E8','Сирень'],['#E2E2E6','Серый']];
+const B_HEAD=[['#F49C86','Коралл'],['#EE8FB0','Малина'],['#E38BCB','Фуксия'],['#B9A0EC','Сирень'],['#8EC3F0','Небесный'],['#84D6C6','Бирюза'],['#C3E07F','Лайм'],['#F3D86B','Лимон'],['#F6B56E','Абрикос']];
+const P_CARD=[['#FFFFFF','Белый'],['#FFFCF5','Молоко'],['#FBF6EA','Слоновая кость'],['#FFF6F5','Розоватый'],['#F5F8FC','Голубоватый'],['#F4FAF6','Мятный'],['#F8F6FD','Лавандовый'],['#F3EADB','Крафт']];
+const B_CARD=[['#FFE9E3','Коралловый'],['#FFE6EF','Малиновый'],['#F1EAFF','Сиреневый'],['#E6F3FF','Небесный'],['#E3F8F3','Бирюзовый'],['#F2FADF','Лаймовый'],['#FFF8D6','Лимонный'],['#FFEFDC','Абрикосовый']];
+const ACC_MUTED=[['#B0707B','Пыльная роза'],['#5B7C9C','Деним'],['#8A6950','Какао'],['#4D6D57','Хвоя'],['#8A82BC','Лаванда'],['#946896','Слива'],['#BF6457','Терракота'],['#6A9E92','Мята'],['#7E7672','Графит']];
+const ACC_BRIGHT=[['#E0567A','Малина'],['#E86A4F','Коралл'],['#D9468F','Фуксия'],['#8B5CF6','Фиолет'],['#2F86D9','Синий'],['#159A8C','Бирюза'],['#3F9142','Зелёный'],['#D98E04','Янтарь']];
+const ACC_METAL=[['#B08D3C','Золото'],['#B57A6A','Розовое золото'],['#7D8590','Серебро'],['#9C6B43','Бронза'],['#55595F','Графит']];
+// light chip colours get dark text; strong ones get white text
+const BTN_P=[['#ECEAFD','Лаванда','#4B3FD1'],['#F2E1E2','Пудра','#8E4E59'],['#F4D8C8','Персик','#8A4B2A'],['#D3E6DC','Мята','#2F6B52'],['#D4E2EF','Небо','#2F5A82'],['#EADCC4','Песок','#6E5530'],['#E2E2E6','Серый','#3E3E48'],['#FFFFFF','Белый','#3A2E2F']];
+const BTN_B=[['#E0567A','Малина','#FFFFFF'],['#E86A4F','Коралл','#FFFFFF'],['#8B5CF6','Фиолет','#FFFFFF'],['#2F86D9','Синий','#FFFFFF'],['#159A8C','Бирюза','#FFFFFF'],['#3F9142','Зелёный','#FFFFFF'],['#D98E04','Янтарь','#FFFFFF'],['#3A2E2F','Тёмный','#FFFFFF']];
+const btnMetal=keys=>keys.map(k=>['m:'+k,METN[k],MET[k][0],MET[k][1],'#3A2E2F']);
+const COLOR_ROWS=[
+  {k:'bg',sec:'Общие',label:'Фон приложения',light:1,groups:[['Пастель',P_BG],['Ярче',B_BG],['Металлик',metal(['silver','gold','rose','champ','pearl','bronze','plat'])]],vars:o=>({'--bg':o.c,'--bg-img':o.img})},
+  {k:'surface',sec:'Общие',label:'Карточки',light:1,groups:[['Пастель',P_CARD],['Ярче',B_CARD],['Металлик',metal(['silver','champ','pearl','plat'])]],vars:o=>({'--surface':o.c})},
+  {k:'accent',sec:'Общие',label:'Акцент: кнопки, полоски, «+»',light:1,groups:[['Спокойные',ACC_MUTED],['Яркие',ACC_BRIGHT],['Металлик',ACC_METAL]],vars:o=>({'--accent':o.c,'--accent-ink':'#FFFFFF','--accent-soft':`color-mix(in srgb,${o.c} 16%,#FFFFFF)`})},
+  {k:'ink',sec:'Общие',label:'Текст',light:1,groups:[['',[['#1F1B1C','Чёрный'],['#3A2E2F','Тёплый тёмный'],['#2E3440','Графит'],['#3B2A20','Шоколад'],['#1F2F4A','Тёмно-синий'],['#22382B','Тёмно-зелёный'],['#3D2340','Слива']]]],vars:o=>({'--ink':o.c})},
+  {k:'bar',sec:'Общие',label:'Нижняя панель',light:1,groups:[['Пастель',P_HEAD],['Ярче',B_HEAD],['Металлик',metal(['silver','gold','rose','champ','pearl','plat'])]],vars:o=>({'--bar':o.c,'--bar-img':o.img})},
+  {k:'tile',sec:'Деньги',label:'Плашки внутри карточек',light:1,groups:[['Пастель',P_BG],['Ярче',B_CARD]],vars:o=>({'--tile':o.c})},
+  {k:'in',sec:'Деньги',label:'Цвет поступлений',light:1,groups:[['',[['#5E8C61','Шалфей'],['#2E7D4F','Изумруд'],['#3F8F7A','Бирюза'],['#4C7FB0','Синий'],['#7A6FB8','Фиалка'],['#B08D3C','Золото']]]],vars:o=>({'--in':o.c})},
+  {k:'out',sec:'Деньги',label:'Цвет расходов',light:1,groups:[['',[['#B5574B','Терракота'],['#C0392B','Красный'],['#A8455E','Вишня'],['#9C5A3C','Ржавчина'],['#7A4E8C','Слива'],['#5B5B66','Графит']]]],vars:o=>({'--out':o.c})},
+  {k:'dec',sec:'Тренировки',label:'Кнопка «−» (списать)',light:1,groups:[['Пастель',BTN_P],['Ярче',BTN_B],['Металлик',btnMetal(['silver','gold','rose','champ','bronze'])]],vars:o=>({'--dec-bg':o.c,'--dec-img':o.img,'--dec-fg':o.fg})},
+  {k:'inc',sec:'Тренировки',label:'Кнопка «+»',light:1,groups:[['Пастель',BTN_P],['Ярче',BTN_B],['Металлик',btnMetal(['silver','gold','rose','champ','bronze'])]],vars:o=>({'--inc-bg':o.c,'--inc-img':o.img,'--inc-fg':o.fg})},
+  {k:'head',sec:'Дела',label:'Заголовки дней и шапка календаря',groups:[['Пастель',P_HEAD],['Ярче',B_HEAD],['Металлик',metal(['silver','gold','rose','champ','pearl','bronze','plat'])]],vars:o=>({'--head':o.c,'--head-img':o.img})},
+  {k:'paper',sec:'Дела',label:'Листы',groups:[['Пастель',P_CARD],['Ярче',B_CARD],['Металлик',metal(['silver','champ','pearl','plat','rose','gold'])]],vars:o=>({'--paper':o.c,'--paper-img':o.img})}
+];
+const ROW=Object.fromEntries(COLOR_ROWS.map(r=>[r.k,r]));
+function findColor(k,v){const r=ROW[k];if(!r)return null;for(const [,list] of r.groups)for(const o of list)if(o[0]===v){const m=o[0].startsWith('m:');return {c:m?o[2]:o[0],img:m?o[3]:'',fg:m?o[4]:o[2]||'',name:o[1]}};return null}
 const getColors=()=>{try{return JSON.parse(localStorage.getItem(LS_KEY+':colors'))||{}}catch(e){return {}}};
-// planner headers and paper are light objects in both themes; background and app cards change only in light mode
+// "Дела" paper and headers stay light in both themes; everything else is applied in light mode only
 function applyColors(c){
-  const root=document.documentElement,f={};for(const k of ['bg','head','paper'])f[k]=c[k]&&findColor(k,c[k]);
-  for(const k of ['head','paper']){
-    f[k]?root.style.setProperty('--'+k,f[k].c):root.style.removeProperty('--'+k);
-    f[k]&&f[k].img?root.style.setProperty('--'+k+'-img',f[k].img):root.style.removeProperty('--'+k+'-img');
+  const root=document.documentElement,light=[];
+  for(const r of COLOR_ROWS){
+    const o=c[r.k]&&findColor(r.k,c[r.k]),vars=o?r.vars(o):r.vars({c:'',img:'',fg:''});
+    for(const [n,v] of Object.entries(vars)){
+      if(!r.light){v?root.style.setProperty(n,v):root.style.removeProperty(n)}
+      else if(o&&v)light.push(n+':'+v);
+    }
   }
-  const light=[f.bg?'--bg:'+f.bg.c:'',f.bg&&f.bg.img?'--bg-img:'+f.bg.img:'',f.paper?'--surface:'+f.paper.c:''].filter(Boolean).join(';');
   let el=document.getElementById('custom-bg');
   if(!el){el=document.createElement('style');el.id='custom-bg';(document.head||document.body).appendChild(el)}
-  el.textContent=light?`@media (prefers-color-scheme: light){html:root:not([data-theme="dark"]){${light}}}html:root[data-theme="light"]{${light}}`:'';
+  const css=light.join(';');
+  el.textContent=css?`@media (prefers-color-scheme: light){html:root:not([data-theme="dark"]){${css}}}html:root[data-theme="light"]{${css}}`:'';
 }
 applyColors(getColors());
 
 function openSkin(){
   const colors=getColors();
-  const ccRow=k=>{const g=CUSTOM[k],cur=colors[k]||'',fc=cur&&findColor(k,cur);
+  const ccRow=k=>{const g=ROW[k],cur=colors[k]||'',fc=cur&&findColor(k,cur);
     return `<div class="cc-row"><span>${g.label}<b data-ccname="${k}">${fc?fc.name:'по теме'}</b></span><div class="cc-sw">
       <button class="auto ${fc?'':'on'}" data-cc="${k}" data-v="" aria-label="По теме">авто</button>
-      ${g.groups.map(([gl,list])=>`<small>${gl}</small>`+list.map(o=>`<button class="${cur===o[0]?'on':''}" data-cc="${k}" data-v="${o[0]}" style="--c:${o[2]||o[0]};${o[3]?'background:'+o[3]:''}" aria-label="${o[1]}"></button>`).join('')).join('')}</div></div>`};
+      ${g.groups.map(([gl,list])=>(gl?`<small>${gl}</small>`:'')+list.map(o=>{const m=o[0].startsWith('m:');return `<button class="${cur===o[0]?'on':''}" data-cc="${k}" data-v="${o[0]}" style="--c:${m?o[2]:o[0]};${m?'background:'+o[3]:''}" aria-label="${o[1]}"></button>`}).join('')).join('')}</div></div>`};
+  let secs='',lastSec='';for(const r of COLOR_ROWS){if(r.sec!==lastSec){secs+=`<div class="cc-sec">${r.sec}</div>`;lastSec=r.sec}secs+=ccRow(r.k)}
   const cur=document.documentElement.dataset.skin||'pudra';
   const last=lastBackup();
   openSheet(`<h3>Настройки</h3><h2 style="margin-top:0">Оформление</h2><div class="skins">${SKINS.map(([k,n,bg,ac,soft])=>`<button class="skin ${k===cur?'on':''}" data-skin="${k}" style="--sbg:${bg};--sac:${ac};--ssoft:${soft}">
     <span class="skin-prev"><i></i><i></i><i></i></span><b>${n}</b></button>`).join('')}</div>
     <p class="hint">Тема сохраняется на этом телефоне. Тёмный вариант включается сам, когда на телефоне тёмный режим.</p>
     <h2>Свои цвета</h2>
-    <div class="cc-prev"><div class="cc-app"><span>Бюджет октября</span><b>120 000 ₽</b></div><div class="cc-card"><b>Понедельник 19</b><span>УТРО</span><span>1) 08.30 Ирина</span><span></span></div><div class="cc-card"><b>Четверг 22</b><span>ДЕНЬ</span><span>1) аренда</span><span></span></div></div>
-    ${ccRow('bg')}${ccRow('head')}${ccRow('paper')}
-    <p class="hint">Цвета действуют во всём приложении, поверх темы. Фон и карточки меняются в светлом режиме телефона, в тёмном остаются тёмными. Заголовки дней и листы в «Делах» светлые всегда, как бумага.</p>
+    <div class="cc-prev"><div class="cc-app"><div class="r"><span>Бюджет октября<br><b>120 000 ₽</b></span><span class="cc-pill">Распределить</span></div>
+      <div class="cc-tiles"><span>Пришло<b class="pos">+12 000 ₽</b></span><span>Ушло<b class="neg">−18 000 ₽</b></span></div>
+      <div class="r"><span>Аня Смирнова</span><span class="cc-step"><i class="d">−</i><em>8</em><i class="u">+</i></span></div></div>
+      <div class="cc-card"><b>Понедельник 19</b><span>УТРО</span><span>1) 08.30 Ирина</span><span></span></div><div class="cc-card"><b>Четверг 22</b><span>ДЕНЬ</span><span>1) аренда</span><span></span></div>
+      <div class="cc-bar"><span class="on">Деньги</span><span>Тренировки</span><span>Дела</span><span>Ещё</span></div></div>
+    ${secs}
+    <p class="hint">Цвета ложатся поверх темы. «Авто» возвращает цвет темы. Всё, кроме раздела «Дела», меняется в светлом режиме телефона, в тёмном остаётся тёмная тема. Заголовки дней и листы в «Делах» светлые всегда, как бумага.</p>
     ${S.mode==='local'?`<h2>Резервная копия</h2>
     <div class="group stats"><div><span>Последняя копия</span><b>${last?when(last):'ещё не было'}</b></div></div>
     <p class="hint">Все данные хранятся только на этом телефоне. Сохраняйте копию раз в неделю и отправляйте её себе в Telegram или в «Файлы»: если телефон потеряется или сбросится, из копии всё вернётся.</p>
