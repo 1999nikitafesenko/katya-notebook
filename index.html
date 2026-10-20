@@ -1267,7 +1267,10 @@ function openSkin(){
     <p class="hint">Все данные хранятся только на этом телефоне. Сохраняйте копию раз в неделю и отправляйте её себе в Telegram или в «Файлы»: если телефон потеряется или сбросится, из копии всё вернётся.</p>
     <div class="actions"><button class="primary" data-act="backup-save">Сохранить копию</button>
       <label class="neutral filebtn">Восстановить из копии<input type="file" accept=".json,application/json" id="b-file" class="vh"></label>
-      <div id="b-restore"></div></div>`:''}`,
+      <div id="b-restore"></div></div>
+    <h2>Сброс</h2>
+    <p class="hint">Удаляет все операции, клиентов, тренировки, события и заметки на этом телефоне. Тема останется. Перед сбросом можно сохранить копию.</p>
+    <div class="actions"><button class="secondary" id="b-reset">Удалить все данные</button></div>`:''}`,
   panel=>{
     panel.onchange=e=>{
       if(e.target.id!=='b-file'||!e.target.files[0])return;
@@ -1283,7 +1286,14 @@ function openSkin(){
         };
       };r.readAsText(e.target.files[0]);
     };
-    panel.onclick=e=>{const b=e.target.closest('[data-skin]');if(!b)return;
+    panel.onclick=e=>{
+      if(e.target.id==='b-reset'){
+        if(!e.target.classList.contains('armed')){e.target.classList.add('armed');e.target.textContent='Точно удалить всё? Нажмите ещё раз';return}
+        S.data={tx:{},clients:{},tasks:{},alloc:{},workouts:{},daynotes:{},budget:null,flow:null};
+        try{localStorage.removeItem(LS_KEY);localStorage.removeItem(LS_KEY+':backup');localStorage.removeItem(LS_KEY+':pay')}catch(_){}
+        S.month=S.calMonth=today().slice(0,7);S.selDay=today();
+        closeSheet();render(true);toast('Все данные удалены');return}
+      const b=e.target.closest('[data-skin]');if(!b)return;
     applySkin(b.dataset.skin);try{localStorage.setItem(LS_KEY+':skin',b.dataset.skin)}catch(_){}
     panel.querySelectorAll('[data-skin]').forEach(x=>x.classList.toggle('on',x===b))}});
 }
