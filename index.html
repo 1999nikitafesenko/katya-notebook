@@ -225,6 +225,42 @@ h2{font-size:13px;font-weight:600;text-transform:uppercase;letter-spacing:.06em;
 .dadd input{width:100%;border:1.5px dashed var(--line);background:none;border-radius:10px;padding:9px 12px;font-size:16px;margin-left:26px;width:calc(100% - 26px)}
 .dadd input:focus{border-style:solid;border-color:var(--accent);outline:none}
 
+/* day page: a ruled notebook sheet */
+.dhead{display:flex;justify-content:space-between;align-items:center;gap:10px}
+.dhead h3{margin:4px 0 10px}
+.dclose{width:38px;height:38px;border:0;border-radius:50%;background:var(--surface);font-size:24px;line-height:1;color:var(--ink);flex:none}
+.wstrip{display:grid;grid-template-columns:24px repeat(7,minmax(0,1fr)) 24px;align-items:center;gap:2px;margin-bottom:10px}
+.wsnav{border:0;background:none;font-size:22px;color:var(--muted);padding:0;height:52px}
+.ws{border:0;background:none;border-radius:10px;padding:4px 0 6px;display:grid;justify-items:center;gap:1px;color:var(--ink)}
+.ws small{font-size:11px;color:var(--muted)}
+.ws b{font-size:19px;font-weight:600;font-variant-numeric:tabular-nums}
+.ws i{width:5px;height:5px;border-radius:50%;background:var(--accent)}
+.ws i.none{visibility:hidden}
+.ws.we b{color:var(--out)}
+.ws.today small{background:var(--out);color:#fff;border-radius:5px;padding:0 6px}
+.ws.sel{background:var(--accent-soft)}
+.paper{background:var(--surface);border-radius:16px;padding:6px 12px 10px;background-image:repeating-linear-gradient(to bottom,transparent 0 31px,var(--line) 31px 32px);background-origin:content-box;background-attachment:local}
+.pline{display:flex;align-items:center;gap:6px;height:32px;font-size:17px;line-height:32px}
+.pline.pp2{font-weight:700;letter-spacing:.04em;text-transform:uppercase;font-size:15px}
+.pchk{width:18px;height:18px;flex:none;border-radius:5px;border:1.5px solid color-mix(in srgb,var(--c,var(--muted)) 70%,var(--line));background:none;padding:0;display:grid;place-items:center;font-size:12px;font-weight:700;color:#fff;line-height:1}
+.pchk.on{background:var(--c,var(--accent));border-color:var(--c,var(--accent))}
+.pchk.ghost{border-color:transparent}
+.pn{flex:none;color:var(--ink)}
+.pt{flex:1;min-width:0;white-space:nowrap;overflow-x:auto;scrollbar-width:none}
+.pt::-webkit-scrollbar{display:none}
+.ed{outline:none;padding:2px 3px;border-radius:3px;min-width:4px;display:inline-block;line-height:24px}
+.ed:focus{box-shadow:0 0 0 1.5px var(--accent)}
+.ed[data-addp]{min-width:60%}
+.ed[data-addp]:empty::before{content:attr(data-ph);color:var(--muted)}
+.pline.done .hl{opacity:.65}
+.dot-btn.sm{width:18px;height:18px;border-width:2px}
+.pmore{border:0;background:none;color:var(--muted);font-size:18px;width:24px;padding:0;flex:none}
+.paper .rt-wrap{margin:4px 0;box-shadow:0 0 0 1px var(--line)}
+.paper .palette-row{padding:6px 0 8px 24px}
+/* checkbox right on the week card */
+.pl .pchk{display:inline-grid;width:14px;height:14px;border-radius:4px;font-size:10px;vertical-align:-2px;margin-right:4px}
+.pl.done .hl{text-decoration:line-through;text-decoration-color:color-mix(in srgb,var(--ink) 45%,transparent)}
+
 /* calendar */
 .seg-v{width:172px;margin:0}
 .seg-v button{padding:7px}
@@ -1213,7 +1249,7 @@ function weekView(){
     const body=PARTS.map(([k,l])=>{
       const it=evs.filter(e=>partOf(e)===k).sort(sortItems);
       return `<span class="pp">${l}</span>`+it.map((e,j)=>{const dn=isDone(e,s);
-        return `<span class="pl ${dn?'done':''}">${j+1}) <span class="hl" style="--c:${evColor(e.color)}">${esc(itemText(e))}${dn?' ✓':''}</span></span>`}).join('')
+        return `<span class="pl ${dn?'done':''}" style="--c:${evColor(e.color)}"><button class="pchk ${dn?'on':''}" data-act="t-toggle" data-id="${esc(e.id)}" data-day="${s}" aria-label="${dn?'Снять отметку':'Отметить сделанным'}">${dn?'✓':''}</button>${j+1}) <span class="hl">${esc(itemText(e))}</span></span>`}).join('')
         +'<span class="pl"></span>'.repeat(Math.max(1,2-it.length));
     }).join('');
     return `<div class="pday ${s===td?'today':''} ${i>4?'we short':''}" data-act="day-open" data-day="${s}" role="button" tabindex="0" aria-label="${dayTitle(s)}, открыть">
@@ -1227,8 +1263,8 @@ function weekView(){
     ${ws!==weekStartOf(td)?'<button class="link-btn" data-act="go-today">Сегодня</button>':''}<button class="icon-btn" data-act="w-next" aria-label="Следующая неделя">›</button></div></section>
     <div class="wk-grid"><div class="wk-col">${[0,1,2].map(card).join('')}</div><div class="wk-col">${[3,4,5,6].map(card).join('')}</div></div>`;
 }
-function openDay(s){
-  const d=parseDay(s),idx=wdMon(d);let colorFor=null;
+function openDay(startDay){
+  let s=startDay,colorFor=null;
   openSheet('<div id="dd"></div>',panel=>{
     const box=panel.querySelector('#dd');
     const saveNote=()=>{
@@ -1240,45 +1276,67 @@ function openDay(s){
     S.sheetClose=saveNote;
     const draw=focusPart=>{
       saveNote();
-      const evs=eventsOn(s),note=S.data.daynotes[s];
-      let h=`<h3>${WD_FULL[idx]}, ${d.getDate()} ${MG[d.getMonth()]}</h3>`;
+      const d=parseDay(s),idx=wdMon(d),evs=eventsOn(s),note=S.data.daynotes[s],td=today();
+      const ws=parseDay(weekStartOf(s));
+      let h=`<div class="dhead"><h3>${WD_FULL[idx]}, ${d.getDate()} ${MG[d.getMonth()]}${d.getFullYear()!==new Date().getFullYear()?' '+d.getFullYear():''}</h3>
+        <button class="dclose" data-dclose="1" aria-label="Закрыть">×</button></div>
+        <div class="wstrip"><button class="wsnav" data-dweek="-7" aria-label="Прошлая неделя">‹</button>`;
+      for(let i=0;i<7;i++){const x=new Date(ws);x.setDate(ws.getDate()+i);const xs=ymd(x);
+        h+=`<button class="ws ${xs===s?'sel':''} ${xs===td?'today':''} ${i>4?'we':''}" data-dgo="${xs}"><small>${WD_SHORT[i]}</small><b>${x.getDate()}</b><i class="${eventsOn(xs).length?'':'none'}"></i></button>`}
+      h+=`<button class="wsnav" data-dweek="7" aria-label="Следующая неделя">›</button></div><div class="paper">`;
       for(const [k,l] of PARTS){
         const it=evs.filter(e=>partOf(e)===k).sort(sortItems);
-        h+=`<div class="dsec"><h4>${l}</h4>${it.map((e,j)=>{const dn=isDone(e,s);return `<div class="drow ${dn?'done':''}" style="--c:${evColor(e.color)}">
-            <span class="dn-i">${j+1})</span>
-            <input class="dtext" data-edit="${esc(e.id)}" value="${esc(itemText(e))}" enterkeyhint="done" autocomplete="off" aria-label="Запись">
-            <button class="check ${dn?'on':''}" data-dtoggle="${esc(e.id)}" aria-label="${dn?'Снять отметку':'Отметить сделанным'}">${dn?'✓':''}</button>
-            <button class="dot-btn" data-dcolor="${esc(e.id)}" aria-label="Цвет выделения"></button>
-            <button class="x" data-dmore="${esc(e.id)}" aria-label="Повтор, время, заметка">⋯</button>
-          </div>${colorFor===e.id?`<div class="palette-row">${EV_COLORS.map(([ck,cc,cn])=>`<button class="sw ${(e.color||'def')===ck?'on':''}" data-setc="${ck}" data-cfor="${esc(e.id)}" style="--c:${cc}" aria-label="${cn}"></button>`).join('')}
-            <button class="link-btn" data-ddel="${esc(e.id)}" style="color:var(--out)">Удалить${isRep(e)?' на этот день':''}</button></div>`:''}`}).join('')}
-          <form class="dadd" data-part="${k}"><input data-addp="${k}" placeholder="+ например «08.30 Ирина»" enterkeyhint="done" autocomplete="off" aria-label="Добавить в ${l.toLowerCase()}"></form></div>`;
+        h+=`<div class="pline pp2">${l}</div>`;
+        it.forEach((e,j)=>{const dn=isDone(e,s);
+          h+=`<div class="pline ${dn?'done':''}" style="--c:${evColor(e.color)}">
+            <button class="pchk ${dn?'on':''}" data-dtoggle="${esc(e.id)}" aria-label="${dn?'Снять отметку':'Отметить сделанным'}">${dn?'✓':''}</button>
+            <span class="pn">${j+1})</span><span class="pt"><span class="hl ed" contenteditable="true" spellcheck="false" data-edit="${esc(e.id)}">${esc(itemText(e))}</span></span>
+            <button class="dot-btn sm" data-dcolor="${esc(e.id)}" aria-label="Цвет и удаление"></button><button class="pmore" data-dmore="${esc(e.id)}" aria-label="Повтор, время, заметка">⋯</button></div>`;
+          if(colorFor===e.id)h+=`<div class="palette-row">${EV_COLORS.map(([ck,cc,cn])=>`<button class="sw ${(e.color||'def')===ck?'on':''}" data-setc="${ck}" data-cfor="${esc(e.id)}" style="--c:${cc}" aria-label="${cn}"></button>`).join('')}
+            <button class="link-btn" data-ddel="${esc(e.id)}" style="color:var(--out)">Удалить${isRep(e)?' на этот день':''}</button></div>`;
+        });
+        h+=`<div class="pline add"><span class="pchk ghost"></span><span class="pn">${it.length+1})</span><span class="pt"><span class="ed" contenteditable="true" spellcheck="false" data-addp="${k}" data-ph="${it.length?'':'например, 08.30 Ирина'}"></span></span></div><div class="pline"></div>`;
       }
-      h+=`<div class="dsec"><h4>Заметка дня</h4>${richEditor(note&&note.html,'Планы, мысли, что угодно…')}</div>
-        <p class="hint">Время в начале строки («08.30 Ирина») сохранится как время события. Цвет, удаление: кружок справа. Повтор и подробности: ⋯</p>
-        <div class="actions"><button class="primary" data-dclose="1">Готово</button></div>`;
+      h+=`<div class="pline pp2">Заметка</div>${richEditor(note&&note.html,'Планы, мысли, что угодно…')}
+        <div class="pline"></div><div class="pline"></div><div class="pline"></div></div>`;
       box.innerHTML=h;bindRich(box);
-      if(focusPart){const f=box.querySelector(`[data-addp="${focusPart}"]`);f&&f.focus()}
+      if(focusPart){const f=box.querySelector(`[data-addp="${focusPart}"]`);if(f){f.focus()}}
+    };
+    const commitEdit=el=>{
+      const ev=S.data.tasks[el.dataset.edit];if(!ev)return false;
+      const v=parseLine(el.textContent);
+      if(!v.title&&!v.time){el.textContent=itemText(ev);toast('Чтобы удалить, нажмите цветной кружок → «Удалить»');return false}
+      if(v.title===ev.title&&v.time===(ev.time||''))return false;
+      Back.put('tasks',ev.id,{...ev,title:v.title,time:v.time,part:partOf(ev)});
+      return v.time!==(ev.time||'');
+    };
+    const commitAdd=el=>{
+      const v=parseLine(el.textContent);if(!v.title&&!v.time)return false;
+      Back.put('tasks',uid(),{title:v.title,date:s,time:v.time,timeEnd:'',part:el.dataset.addp,color:'def',repeat:{freq:'none'},reminder:'none',notes:'',done:false,createdAt:Date.now()});
+      return true;
     };
     draw();
-    panel.onsubmit=e=>{
-      e.preventDefault();const f=e.target.closest('.dadd');if(!f)return;
-      const inp=f.querySelector('input'),v=parseLine(inp.value);if(!v.title&&!v.time)return;
-      Back.put('tasks',uid(),{title:v.title,date:s,time:v.time,timeEnd:'',part:f.dataset.part,color:'def',repeat:{freq:'none'},reminder:'none',notes:'',done:false,createdAt:Date.now()});
-      draw(f.dataset.part);
-    };
-    panel.onchange=e=>{
-      const id=e.target.dataset&&e.target.dataset.edit;if(!id)return;
-      const ev=S.data.tasks[id];if(!ev)return;const v=parseLine(e.target.value);
-      if(!v.title&&!v.time){e.target.value=itemText(ev);toast('Чтобы удалить, нажмите кружок цвета → «Удалить»');return}
-      if(v.title===ev.title&&v.time===(ev.time||''))return;
-      Back.put('tasks',id,{...ev,title:v.title,time:v.time,part:partOf(ev)});
-      if(v.time!==(ev.time||''))draw();
-    };
+    box.addEventListener('keydown',e=>{
+      const t=e.target;if(e.key!=='Enter'||!t.classList||!t.classList.contains('ed'))return;
+      e.preventDefault();
+      if(t.dataset.addp){const k=t.dataset.addp;t.dataset.done='1';if(commitAdd(t))draw(k)}
+      else{const k=partOf(S.data.tasks[t.dataset.edit]||{});t.dataset.done='1';const moved=commitEdit(t);if(moved)draw(k);else box.querySelector(`[data-addp="${k}"]`).focus()}
+    });
+    box.addEventListener('focusout',e=>{
+      const t=e.target;if(!t.classList||!t.classList.contains('ed')||t.dataset.done)return;
+      if(t.dataset.addp){if(commitAdd(t))setTimeout(()=>{if(!box.contains(document.activeElement)||document.activeElement===document.body)draw()},0)}
+      else if(commitEdit(t))setTimeout(()=>draw(),0);
+    });
+    box.addEventListener('paste',e=>{
+      if(!e.target.classList||!e.target.classList.contains('ed'))return;
+      e.preventDefault();document.execCommand('insertText',false,(e.clipboardData||window.clipboardData).getData('text').replace(/\s+/g,' '));
+    });
     panel.onclick=e=>{
-      const b=e.target.closest('[data-dtoggle],[data-dcolor],[data-setc],[data-dmore],[data-ddel],[data-dclose]');if(!b)return;
+      const b=e.target.closest('[data-dtoggle],[data-dcolor],[data-setc],[data-dmore],[data-ddel],[data-dclose],[data-dgo],[data-dweek]');if(!b)return;
       const ds=b.dataset;
       if(ds.dtoggle){toggleEvent(ds.dtoggle,s);draw()}
+      else if(ds.dgo){s=ds.dgo;colorFor=null;draw();panel.scrollTop=0}
+      else if(ds.dweek){const x=parseDay(s);x.setDate(x.getDate()+ +ds.dweek);s=ymd(x);colorFor=null;draw()}
       else if(ds.dcolor){colorFor=colorFor===ds.dcolor?null:ds.dcolor;draw()}
       else if(ds.setc){const ev=S.data.tasks[ds.cfor];if(ev)Back.put('tasks',ds.cfor,{...ev,color:ds.setc,part:partOf(ev)});colorFor=null;draw()}
       else if(ds.dmore){saveNote();S.sheetClose=null;closeSheet();openEvent(ds.dmore,s)}
