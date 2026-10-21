@@ -189,23 +189,23 @@ h2{font-size:13px;font-weight:600;text-transform:uppercase;letter-spacing:.06em;
 .wk-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;align-items:start}
 .wk-col{display:grid;gap:10px;min-width:0}
 .pday{position:relative;cursor:pointer;display:block;width:100%;border:0;padding:0;text-align:left;background:var(--paper-img,none),var(--paper);border-radius:14px;overflow:hidden;box-shadow:0 1px 3px rgba(0,0,0,.12);color:var(--paper-ink)}
-.pday-h{display:flex;justify-content:space-between;align-items:center;gap:6px;padding:7px 9px 7px 11px;background:var(--head-img,none),var(--head);color:var(--paper-ink);font-size:15px;white-space:nowrap}
+.pday-h{display:flex;justify-content:space-between;align-items:center;gap:6px;padding:7px 9px 7px 11px;background:var(--head-img,none),var(--head);color:var(--paper-ink);font-size:14px;white-space:nowrap}
 .pday-h > span{overflow:hidden;text-overflow:ellipsis}
 .pday-h b{font-weight:700}
 .pday-h svg{width:16px;height:16px;flex:none;color:var(--paper-muted)}
 .pday.today .pday-h{box-shadow:inset 0 -2px 0 var(--out)}
 .pday.we .pday-h b{color:var(--out)}
 .tdot{display:inline-block;width:7px;height:7px;border-radius:50%;background:var(--out);margin-right:5px;vertical-align:2px}
-.pday-b{display:block;height:248px;overflow-y:auto;overscroll-behavior:contain;-webkit-overflow-scrolling:touch;scrollbar-width:none;padding:2px 10px 6px;font-size:13.5px;line-height:24px;background-image:repeating-linear-gradient(to bottom,transparent 0 23px,var(--paper-line) 23px 24px);background-origin:content-box;background-attachment:local}
+.pday-b{display:block;height:239px;overflow-y:auto;overscroll-behavior:contain;-webkit-overflow-scrolling:touch;scrollbar-width:none;padding:2px 9px 6px;font-size:12px;line-height:21px;background-image:repeating-linear-gradient(to bottom,transparent 0 20px,var(--paper-line) 20px 21px);background-origin:content-box;background-attachment:local}
 .pday-b::-webkit-scrollbar{display:none}
-.pday.short .pday-b{height:104px}
+.pday.short .pday-b{height:92px}
 .pday-more{position:absolute;right:6px;bottom:6px;width:30px;height:22px;border:0;border-radius:11px;background:var(--out);color:#fff;font-size:16px;line-height:12px;padding:0 0 4px;opacity:0;pointer-events:none;transition:opacity .15s}
 .pday.has-more .pday-more{opacity:.9;pointer-events:auto}
-.pp{display:block;font-size:11.5px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;height:24px}
-.pl{display:block;height:24px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.pp{display:block;font-size:10.5px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;height:21px}
+.pl{display:block;height:21px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .hl{background:color-mix(in srgb,var(--c) 30%,transparent);border-radius:3px;padding:1px 3px;-webkit-box-decoration-break:clone;box-decoration-break:clone}
 .pl.done .hl{opacity:.7}
-.pnote{display:block;max-height:96px;overflow:hidden;font-size:13px;line-height:24px}
+.pnote{display:block;max-height:84px;overflow:hidden;font-size:12px;line-height:21px}
 .pnote ul{margin:0;padding-left:16px}
 .pnote div,.pnote p{margin:0}
 .dsec{margin-bottom:16px}
@@ -277,7 +277,7 @@ h2{font-size:13px;font-weight:600;text-transform:uppercase;letter-spacing:.06em;
 .paper .rt{min-height:0;padding:8px 12px}
 .paper .palette-row{padding:6px 0 8px 24px}
 /* checkbox right on the week card */
-.pl .pchk{display:inline-grid;width:14px;height:14px;border-radius:4px;font-size:10px;vertical-align:-2px;margin-right:4px}
+.pl .pchk{display:inline-grid;width:13px;height:13px;border-radius:4px;font-size:9px;vertical-align:-2px;margin-right:3px}
 .pl.done .hl{text-decoration:line-through;text-decoration-color:color-mix(in srgb,var(--ink) 45%,transparent)}
 
 /* calendar */
@@ -361,6 +361,10 @@ h2{font-size:13px;font-weight:600;text-transform:uppercase;letter-spacing:.06em;
 /* sheet */
 .sheet{position:fixed;inset:0;z-index:40;display:flex;align-items:flex-end;justify-content:center}
 .scrim{position:absolute;inset:0;background:var(--scrim)}
+.panel.full #dd{display:flex;flex-direction:column;min-height:100%}
+.panel.full .paper{flex:1}
+.paper .pchk.ghost,.pday .pchk.ghost{border-color:transparent}
+.panel.full{height:100%;max-height:100%;border-radius:18px 18px 0 0;padding-top:max(10px,env(safe-area-inset-top,0px))}
 .panel{position:relative;overscroll-behavior:contain;width:100%;max-width:560px;max-height:90%;overflow:auto;background:var(--bg);border-radius:22px 22px 0 0;padding:10px max(16px,env(safe-area-inset-right,0px)) calc(20px + env(safe-area-inset-bottom,0px)) max(16px,env(safe-area-inset-left,0px));animation:up .22s ease-out}
 @keyframes up{from{transform:translateY(40px);opacity:.6}to{transform:none;opacity:1}}
 @media (prefers-reduced-motion:reduce){.panel{animation:none}}
@@ -1290,6 +1294,7 @@ function weekView(){
 function openDay(startDay){
   let s=startDay,colorFor=null;
   openSheet('<div id="dd"></div>',panel=>{
+    panel.classList.add('full');
     const box=panel.querySelector('#dd');
     const saveNote=()=>{
       if(!box.querySelector('.rt'))return;
@@ -1636,7 +1641,7 @@ async function saveBackup(){
 /* ---------- sheet & toast ---------- */
 function openSheet(html,mount){
   S.sheetClose=null;
-  const p=$('#panel');p.onclick=null;p.oninput=null;p.onchange=null;p.onsubmit=null;
+  const p=$('#panel');p.classList.remove('full');p.onclick=null;p.oninput=null;p.onchange=null;p.onsubmit=null;
   p.innerHTML='<div class="grab"></div>'+html;$('#sheet').hidden=false;mount&&mount(p);
 }
 function closeSheet(){if(S.sheetClose){const f=S.sheetClose;S.sheetClose=null;f()}$('#sheet').hidden=true;$('#panel').innerHTML='';if(S.dirty)render()}
