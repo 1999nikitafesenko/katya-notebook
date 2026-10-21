@@ -378,7 +378,7 @@ h2{font-size:13px;font-weight:600;text-transform:uppercase;letter-spacing:.06em;
 /* sheet */
 .sheet{position:fixed;inset:0;z-index:40;display:flex;align-items:flex-end;justify-content:center}
 .scrim{position:absolute;inset:0;background:var(--scrim)}
-.panel{position:relative;width:100%;max-width:560px;max-height:90%;overflow:auto;background:var(--bg);border-radius:22px 22px 0 0;padding:10px max(16px,env(safe-area-inset-right,0px)) calc(20px + env(safe-area-inset-bottom,0px)) max(16px,env(safe-area-inset-left,0px));animation:up .22s ease-out}
+.panel{position:relative;overscroll-behavior:contain;width:100%;max-width:560px;max-height:90%;overflow:auto;background:var(--bg);border-radius:22px 22px 0 0;padding:10px max(16px,env(safe-area-inset-right,0px)) calc(20px + env(safe-area-inset-bottom,0px)) max(16px,env(safe-area-inset-left,0px));animation:up .22s ease-out}
 @keyframes up{from{transform:translateY(40px);opacity:.6}to{transform:none;opacity:1}}
 @media (prefers-reduced-motion:reduce){.panel{animation:none}}
 .grab{width:40px;height:5px;border-radius:3px;background:var(--line);margin:0 auto 10px}
@@ -417,7 +417,7 @@ h2{font-size:13px;font-weight:600;text-transform:uppercase;letter-spacing:.06em;
 .hist li span:last-child{color:var(--muted);font-size:14px}
 .hint{font-size:13px;color:var(--muted);margin:6px 4px 0}
 
-.toast{position:fixed;z-index:50;left:50%;transform:translateX(-50%);bottom:calc(150px + env(safe-area-inset-bottom,0px));width:min(520px,calc(100% - 32px));background:var(--ink);color:var(--bg);border-radius:14px;padding:12px 14px;display:flex;align-items:center;gap:12px;font-size:15px;box-shadow:0 10px 30px rgba(0,0,0,.25)}
+.toast{position:fixed;z-index:50;left:50%;transform:translateX(calc(-50% + var(--dx,0px)));touch-action:pan-y;bottom:calc(150px + env(safe-area-inset-bottom,0px));width:min(520px,calc(100% - 32px));background:var(--ink);color:var(--bg);border-radius:14px;padding:12px 14px;display:flex;align-items:center;gap:12px;font-size:15px;box-shadow:0 10px 30px rgba(0,0,0,.25)}
 .toast span{flex:1;min-width:0}
 .toast button{border:0;background:none;color:var(--accent-soft);font-weight:700;font-size:15px;padding:4px}
 </style>
@@ -1661,10 +1661,50 @@ let toastT;
 function toast(msg,action,fn){
   const el=$('#toast');clearTimeout(toastT);
   el.innerHTML=`<span>${esc(msg)}</span>${action?`<button>${esc(action)}</button>`:''}`;
+  el.style.transition='';el.style.setProperty('--dx','0px');el.style.opacity='';
   el.hidden=false;
-  if(action)el.querySelector('button').onclick=()=>{el.hidden=true;fn()};
+  if(action)el.querySelector('button').onclick=()=>{if(el.dataset.swiped)return;el.hidden=true;fn()};
   toastT=setTimeout(()=>el.hidden=true,action?5000:2200);
 }
+
+/* swipe gestures: the toast flicks away sideways, an open sheet pulls down to close */
+(function(){
+  const t=$('#toast');let x0=null,dx=0;
+  t.addEventListener('touchstart',e=>{x0=e.touches[0].clientX;dx=0;delete t.dataset.swiped;t.style.transition='none';clearTimeout(toastT)},{passive:true});
+  t.addEventListener('touchmove',e=>{if(x0==null)return;dx=e.touches[0].clientX-x0;t.style.setProperty('--dx',dx+'px');t.style.opacity=String(Math.max(.2,1-Math.abs(dx)/260))},{passive:true});
+  t.addEventListener('touchend',()=>{
+    if(x0==null)return;x0=null;t.style.transition='transform .2s ease,opacity .2s ease';
+    if(Math.abs(dx)>70){t.dataset.swiped='1';t.style.setProperty('--dx',(dx>0?1:-1)*window.innerWidth+'px');t.style.opacity='0';setTimeout(()=>{t.hidden=true;delete t.dataset.swiped},200)}
+    else{t.style.setProperty('--dx','0px');t.style.opacity='';toastT=setTimeout(()=>t.hidden=true,3000)}
+  });
+
+  const sheet=$('#sheet'),panel=$('#panel');let y0=null,xs=0,dy=0,t0=0,drag=false;
+  const skip=el=>el.closest('input,textarea,select,[contenteditable="true"],.cc-sw,.rt-bar,.palette-row');
+  panel.addEventListener('touchstart',e=>{
+    if(skip(e.target)&&!e.target.closest('.grab')){y0=null;return}
+    y0=e.touches[0].clientY;xs=e.touches[0].clientX;dy=0;drag=false;t0=Date.now();
+  },{passive:true});
+  panel.addEventListener('touchmove',e=>{
+    if(y0==null)return;
+    const d=e.touches[0].clientY-y0,dx=e.touches[0].clientX-xs;
+    if(!drag){
+      if(panel.scrollTop>0||d<-8||(Math.abs(dx)>8&&Math.abs(dx)>Math.abs(d))){y0=null;return}
+      if(d<8)return;
+      drag=true;panel.style.transition='none';
+    }
+    e.preventDefault();dy=Math.max(0,d);panel.style.transform=`translateY(${dy}px)`;
+    sheet.querySelector('.scrim').style.opacity=String(Math.max(0,1-dy/400));
+  },{passive:false});
+  panel.addEventListener('touchend',()=>{
+    if(!drag){y0=null;return}
+    drag=false;y0=null;const fast=dy>40&&Date.now()-t0<250;
+    panel.style.transition='transform .22s ease';
+    const sc=sheet.querySelector('.scrim');sc.style.transition='opacity .22s ease';
+    if(dy>110||fast){panel.style.transform='translateY(100%)';sc.style.opacity='0';
+      setTimeout(()=>{closeSheet();panel.style.transform='';panel.style.transition='';sc.style.opacity='';sc.style.transition=''},210)}
+    else{panel.style.transform='';sc.style.opacity='';setTimeout(()=>{panel.style.transition='';sc.style.transition=''},230)}
+  });
+})();
 
 /* ---------- events ---------- */
 document.addEventListener('click',e=>{
