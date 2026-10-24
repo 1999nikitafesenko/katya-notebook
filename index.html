@@ -208,8 +208,8 @@ h2{font-size:13px;font-weight:600;text-transform:uppercase;letter-spacing:.06em;
 .wk-grid{align-items:stretch}
 .pday.short{flex:1;display:flex;flex-direction:column}
 .pday.short .pday-b{flex:1 1 0;height:0;min-height:57px}
-.wk-copy{flex:none;border:1.5px dashed var(--accent);background:var(--accent-soft);color:var(--accent);border-radius:14px;padding:11px 8px;font-weight:600;font-size:14px}
-.wk-copy.armed{background:var(--accent);color:var(--accent-ink);border-style:solid}
+.wk-copy{flex:none;border:1px dashed color-mix(in srgb,var(--muted) 35%,transparent);background:transparent;color:color-mix(in srgb,var(--muted) 70%,transparent);border-radius:14px;padding:11px 8px;font-weight:600;font-size:14px}
+.wk-copy.armed{background:var(--accent-soft);color:var(--accent);border-color:var(--accent)}
 .pday{position:relative;cursor:pointer;display:block;width:100%;border:0;padding:0;text-align:left;background:var(--paper-img,none),var(--paper);border-radius:14px;overflow:hidden;box-shadow:0 1px 3px rgba(0,0,0,.12);color:var(--paper-ink)}
 .pday-h{display:flex;justify-content:space-between;align-items:center;gap:6px;padding:7px 9px 7px 11px;background:var(--head-img,none),var(--head);color:var(--paper-ink);font-size:13px;white-space:nowrap}
 .pday-h > span{overflow:hidden;text-overflow:ellipsis}
@@ -533,6 +533,15 @@ const Back={
     const m={...S.data[col]};delete m[id];S.data[col]=m;render();
     if(this.db) this.write(col+'/'+id,()=>this.db.doc(col+'/'+id).delete());
     else this.saveLocal();
+  },
+  // delete every record; in the shared store this clears it for everyone who opens the app
+  wipe(){
+    if(this.db){
+      for(const col of ['tx','clients','tasks','alloc','workouts','daynotes'])for(const id of Object.keys(S.data[col]||{}))this.write('wipe',()=>this.db.doc(col+'/'+id).delete());
+      for(const d of ['settings/budget','settings/flow'])this.write('wipe',()=>this.db.doc(d).delete());
+    }
+    S.data={tx:{},clients:{},tasks:{},alloc:{},workouts:{},daynotes:{},budget:null,flow:null};
+    if(!this.db)this.saveLocal();
   },
   putFlow(f){
     S.data.flow=f;render(true);
@@ -1603,10 +1612,10 @@ function openSkin(){
     <p class="hint">Все данные хранятся только на этом телефоне. Сохраняйте копию раз в неделю и отправляйте её себе в Telegram или в «Файлы»: если телефон потеряется или сбросится, из копии всё вернётся.</p>
     <div class="actions"><button class="primary" data-act="backup-save">Сохранить копию</button>
       <label class="neutral filebtn">Восстановить из копии<input type="file" accept=".json,application/json" id="b-file" class="vh"></label>
-      <div id="b-restore"></div></div>
+      <div id="b-restore"></div></div>`:''}
     <h2>Сброс</h2>
-    <p class="hint">Удаляет все операции, клиентов, тренировки, события и заметки на этом телефоне. Тема останется. Перед сбросом можно сохранить копию.</p>
-    <div class="actions"><button class="secondary" id="b-reset">Удалить все данные</button></div>`:''}`,
+    <p class="hint">Удаляет все операции, клиентов, тренировки, события и заметки. Тема останется. Перед сбросом можно сохранить копию.</p>
+    <div class="actions"><button class="secondary" id="b-reset">Удалить все данные</button></div>`,
   panel=>{
     panel.oninput=e=>{
       const key={'tone-bg':'bg','tone-sat':'sat','tone-card':'card'}[e.target.id];if(!key)return;
@@ -1635,7 +1644,7 @@ function openSkin(){
         applySkin('');applyColors({});applyTone({bg:100,sat:100,card:null});closeSheet();openSkin();toast('Оформление сброшено');return}
       if(e.target.id==='b-reset'){
         if(!e.target.classList.contains('armed')){e.target.classList.add('armed');e.target.textContent='Точно удалить всё? Нажмите ещё раз';return}
-        S.data={tx:{},clients:{},tasks:{},alloc:{},workouts:{},daynotes:{},budget:null,flow:null};
+        Back.wipe();
         try{localStorage.removeItem(LS_KEY);localStorage.removeItem(LS_KEY+':backup');localStorage.removeItem(LS_KEY+':pay')}catch(_){}
         S.month=S.calMonth=today().slice(0,7);S.selDay=today();
         closeSheet();render(true);toast('Все данные удалены');return}
