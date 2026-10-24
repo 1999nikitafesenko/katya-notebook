@@ -192,28 +192,28 @@ h2{font-size:13px;font-weight:600;text-transform:uppercase;letter-spacing:.06em;
 .wk-title{flex:1;display:grid;text-align:center;line-height:1.2}
 .wk-title b{font-weight:600}
 .wk-title small{font-size:12px;color:var(--muted)}
-.wk-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;align-items:start}
-.wk-col{display:flex;flex-direction:column;gap:10px;min-width:0}
+.wk-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:6px;align-items:start}
+.wk-col{display:flex;flex-direction:column;gap:6px;min-width:0}
 .wk-grid{align-items:stretch}
 .pday.short{flex:1;display:flex;flex-direction:column}
-.pday.short .pday-b{flex:1 1 0;height:0;min-height:57px}
-.wk-copy{flex:none;border:1px dashed color-mix(in srgb,var(--muted) 35%,transparent);background:transparent;color:color-mix(in srgb,var(--muted) 70%,transparent);border-radius:14px;padding:11px 8px;font-weight:600;font-size:14px}
+.pday.short .pday-b{flex:1 1 0;height:0;min-height:38px}
+.wk-copy{flex:none;border:1px dashed color-mix(in srgb,var(--muted) 35%,transparent);background:transparent;color:color-mix(in srgb,var(--muted) 70%,transparent);border-radius:12px;padding:7px 8px;font-weight:600;font-size:13px}
 .wk-copy.armed{background:var(--accent-soft);color:var(--accent);border-color:var(--accent)}
 .pday{position:relative;cursor:pointer;display:block;width:100%;border:0;padding:0;text-align:left;background:var(--paper-img,none),var(--paper);border-radius:14px;overflow:hidden;box-shadow:0 1px 3px rgba(0,0,0,.12);color:var(--paper-ink)}
-.pday-h{display:flex;justify-content:space-between;align-items:center;gap:6px;padding:7px 9px 7px 11px;background:var(--head-img,none),var(--head);color:var(--paper-ink);font-size:13px;white-space:nowrap}
+.pday-h{display:flex;justify-content:space-between;align-items:center;gap:6px;padding:4px 8px 4px 10px;background:var(--head-img,none),var(--head);color:var(--paper-ink);font-size:12.5px;white-space:nowrap}
 .pday-h > span{overflow:hidden;text-overflow:ellipsis}
 .pday-h b{font-weight:700}
 .pday-h svg{width:16px;height:16px;flex:none;color:var(--paper-muted)}
 .pday.today .pday-h{box-shadow:inset 0 -2px 0 var(--out)}
 .pday.we .pday-h b{color:var(--out)}
 .tdot{display:inline-block;width:7px;height:7px;border-radius:50%;background:var(--out);margin-right:5px;vertical-align:2px}
-.pday-b{display:block;height:236px;overflow-y:auto;overscroll-behavior:contain;-webkit-overflow-scrolling:touch;scrollbar-width:none;padding:2px 8px 6px;font-size:11px;line-height:19px;background-image:repeating-linear-gradient(to bottom,transparent 0 18px,var(--paper-line) 18px 19px);background-origin:content-box;background-attachment:local}
+.pday-b{display:block;height:var(--pday-h,168px);overflow-y:auto;overscroll-behavior:contain;-webkit-overflow-scrolling:touch;scrollbar-width:none;padding:2px 8px 2px;font-size:11px;line-height:18px;background-image:repeating-linear-gradient(to bottom,transparent 0 17px,var(--paper-line) 17px 18px);background-origin:content-box;background-attachment:local}
 .pday-b::-webkit-scrollbar{display:none}
 .pday.short .pday-b{height:auto}
 .pday-more{position:absolute;right:6px;bottom:6px;width:30px;height:22px;border:0;border-radius:11px;background:var(--out);color:#fff;font-size:16px;line-height:12px;padding:0 0 4px;opacity:0;pointer-events:none;transition:opacity .15s}
 .pday.has-more .pday-more{opacity:.9;pointer-events:auto}
-.pp{display:block;font-size:9.5px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;height:19px}
-.pl{display:block;height:19px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.pp{display:block;font-size:9.5px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;height:18px}
+.pl{display:block;height:18px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .hl{background:color-mix(in srgb,var(--c) 30%,transparent);border-radius:3px;padding:1px 3px;-webkit-box-decoration-break:clone;box-decoration-break:clone}
 .pl.done .hl{opacity:.7}
 .pnote{display:block;max-height:76px;overflow:hidden;font-size:11px;line-height:19px}
@@ -294,9 +294,9 @@ h2{font-size:13px;font-weight:600;text-transform:uppercase;letter-spacing:.06em;
 /* calendar */
 .seg-v{width:172px;margin:0}
 .seg-v button{padding:7px}
-.top-cal{padding-block:2px 10px}
+.top-cal{padding-block:0 6px}
 .top-cal .seg-v{width:100%}
-.top-cal .seg-v button{padding:9px;font-size:16px}
+.top-cal .seg-v button{padding:5px;font-size:13px}
 .cal{background:var(--surface);border-radius:20px;padding:10px 8px 6px}
 .cal .head{display:flex;justify-content:space-between;align-items:center;gap:6px;margin:0 0 6px;padding:4px;border-radius:14px;background:var(--head-img,none),var(--head);color:var(--paper-ink)}
 .cal .head b{font-weight:600;flex:1;text-align:center}
@@ -330,7 +330,10 @@ h2{font-size:13px;font-weight:600;text-transform:uppercase;letter-spacing:.06em;
 .note-card{display:block;width:100%;text-align:left;border:0;background:var(--surface);border-radius:var(--r);padding:12px 14px;font-size:15px;line-height:1.45;max-height:240px;overflow:hidden;overflow-wrap:anywhere;color:var(--ink)}
 .note-add{display:block;width:100%;text-align:left;border:1.5px dashed var(--line);background:none;border-radius:var(--r);padding:14px;color:var(--muted);font-size:15px}
 .note-card ul,.rt ul{padding-left:20px;margin:4px 0}
-.week-head{padding:0;margin-bottom:10px;background:none}
+.week-head{padding:0;margin-bottom:6px;background:none}
+.week-head .icon-btn{width:30px;height:30px;font-size:17px}
+.week-head .wk-title b{font-size:14px}
+.week-head .wk-title small{font-size:10.5px}
 .week-head .head{margin:0}
 .wday{background:var(--surface);border-radius:var(--r);margin-bottom:10px;overflow:hidden}
 .wday.today{box-shadow:inset 0 0 0 1.5px var(--accent)}
@@ -396,7 +399,6 @@ h2{font-size:13px;font-weight:600;text-transform:uppercase;letter-spacing:.06em;
 .primary{border:0;border-radius:14px;background:var(--accent);color:var(--accent-ink);font-weight:600;font-size:17px;padding:14px}
 .secondary{border:0;border-radius:14px;background:var(--surface);color:var(--out);font-weight:600;font-size:16px;padding:13px}
 .secondary.armed{background:var(--out);color:var(--surface)}
-.catedit2{display:none}
 .catcard{display:grid;gap:8px;padding-bottom:12px;margin-bottom:12px;border-bottom:1px solid var(--line)}
 .catedit{display:grid;grid-template-columns:1fr 40px 40px;gap:8px}
 .catedit2{display:grid;grid-template-columns:1fr 120px;gap:8px;align-items:center}
@@ -766,7 +768,7 @@ function openAlloc(focusCat){
     <div class="freebox"><span>Бюджет ${rub(total)}</span><span>Свободно <b class="num" id="a-free"></b></span></div>
     
     <div class="group" id="a-rows">${cats.map(c=>{const lim=isSave(c)?0:+c.limit||0,sp=monthSpent(key,c.id);return `<div class="alloc-row">
-      <div class="nm"><b>${esc(c.name)}</b><small class="num">${isSave(c)?'копилка · накоплено '+rub(saveBalance(c.id)):(lim?'план '+rub(lim):'без плана')+(sp?' · потрачено '+rub(sp):'')}</small></div>
+      <div class="nm"><b>${esc(c.name)}</b></div>
       ${lim?`<button class="fill" data-fill="${esc(c.id)}">до плана</button>`:'<span></span>'}
       <input class="num" inputmode="numeric" data-c="${esc(c.id)}" value="${vals[c.id]||''}" placeholder="0" aria-label="Отложить на ${esc(c.name)}, ₽"></div>`}).join('')}</div>
     <p class="hint">Сколько из бюджета месяца отложить на каждый список. Порядок списков меняется в «Изменить».</p>
@@ -851,9 +853,7 @@ function openBudget(){
     panel.querySelector('#cats').innerHTML=cats.map((c,i)=>`<div class="catcard">
       <div class="catedit"><input data-i="${i}" data-k="name" value="${esc(c.name)}" placeholder="Название" aria-label="Название">
       <button data-up="${i}" aria-label="Выше" ${i?'':'disabled'}>↑</button>
-      <button data-rm="${i}" aria-label="Убрать">×</button></div>
-      <div class="catedit2"><div class="seg mini"><button data-kind="plan" data-i="${i}" class="${isSave(c)?'':'on'}">С планом</button><button data-kind="save" data-i="${i}" class="${isSave(c)?'on':''}">Копилка</button></div>
-      ${isSave(c)?'<span class="hint" style="margin:0">без лимита</span>':`<input data-i="${i}" data-k="limit" class="num" inputmode="numeric" value="${c.limit||''}" placeholder="План, ₽" aria-label="План, ₽">`}</div></div>`).join('');
+      <button data-rm="${i}" aria-label="Убрать">×</button></div>`).join('');
   };
   openSheet(`<h3>Списки и план на месяц</h3>
     <div id="cats"></div>
