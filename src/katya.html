@@ -1190,6 +1190,18 @@ function parseBulk(text){
   }
   return items;
 }
+// a workout whose title is really its first exercise, and whose every line already sits inside another workout of the same client
+function brokenCopies(){
+  const norm=t=>String(t||'').split('\n').map(l=>l.trim().toLowerCase().replace(/\s+/g,' ').replace(/[хx×]/g,'x')).filter(Boolean);
+  const byClient={};for(const w of Object.values(S.data.workouts))(byClient[w.clientId]||(byClient[w.clientId]=[])).push(w);
+  const bad=[];
+  for(const list of Object.values(byClient))for(const w of list){
+    if(!/\d/.test(w.title||''))continue;
+    const mine=norm((w.title||'')+'\n'+(w.text||''));
+    if(list.some(g=>g!==w&&!/\d/.test(g.title||'')&&(()=>{const set=new Set(norm(g.text));return mine.every(l=>set.has(l))})()))bad.push(w);
+  }
+  return bad;
+}
 function openBulkImport(){
   let items=null,skip=new Set();
   openSheet('<div id="bi"></div>',panel=>{
@@ -1199,6 +1211,8 @@ function openBulkImport(){
     const draw=()=>{
       let h=`<div class="dhead"><h3>Импорт из Заметок</h3><button class="dclose" data-act="close" aria-label="Закрыть">×</button></div>`;
       if(!items){
+        const bad=brokenCopies();
+        if(bad.length)h+=`<div class="banner" style="display:grid;gap:8px">Нашлись старые кривые записи: ${bad.length} (вместо названия упражнение), у них уже есть правильные копии.<button class="secondary" id="bi-clean">Удалить ${bad.length} кривых записей</button></div>`;
         h+=`<p class="hint" style="margin:0 4px 10px">1. Один раз соберите команду в приложении «Команды», инструкция ниже.<br>2. Запустите её: все заметки скопируются.<br>3. Вставьте сюда и нажмите «Разобрать».</p>
         <label class="field"><textarea id="bi-text" rows="7" placeholder="=== Аня Арсункаева | 2026-09-29&#10;29.09 ноги&#10;Болгарские выпады 4х15 по 6 кг"></textarea></label>
         <div class="row2"><button class="neutral" id="bi-paste">Вставить из буфера</button><button class="primary" id="bi-parse">Разобрать</button></div>
@@ -1230,6 +1244,10 @@ function openBulkImport(){
         if(!items.length){items=null;toast('Не нашла заметок. Текст должен начинаться со строк «=== Папка | дата»');return}
         skip=new Set(Object.keys(Object.fromEntries(items.map(i=>[i.folder,1]))).filter(f=>/стар|recently|недавно удал/i.test(f)));draw();panel.scrollTop=0}
       if(id==='bi-back'){items=null;draw()}
+      if(id==='bi-clean'){
+        if(!e.target.classList.contains('armed')){e.target.classList.add('armed');e.target.textContent='Точно удалить? Нажмите ещё раз';return}
+        const bad=brokenCopies(),copy=bad.map(w=>({...w}));bad.forEach(w=>Back.del('workouts',w.id));draw();
+        toast('Удалено кривых записей: '+bad.length,'Вернуть',()=>Back.putMany('workouts',copy.map(w=>[w.id,w])));}
       if(id==='bi-go'){
         const now=Date.now();let made=0,dup=0,newC=0,fixed=0;const puts=[];
         const groups={};for(const it of items)if(!skip.has(it.folder))(groups[it.folder]||(groups[it.folder]=[])).push(it);
