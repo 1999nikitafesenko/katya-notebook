@@ -397,7 +397,8 @@ h2{font-size:13px;font-weight:600;text-transform:uppercase;letter-spacing:.06em;
 .catedit2 input{border:0;border-radius:12px;background:var(--surface);padding:11px 12px;font-size:16px;min-width:0}
 .seg.mini{margin:0;padding:2px}
 .seg.mini button{padding:7px 4px;font-size:14px}
-.st.plain{color:var(--muted);background:var(--line)}
+.st.plain{color:var(--ink);background:var(--line);font-weight:700}
+.group > .budget-row + .budget-row{border-top:1px solid color-mix(in srgb,var(--ink) 14%,transparent)}
 .stats > div{display:flex;justify-content:space-between;gap:12px;padding:12px 14px}
 .stats span{color:var(--muted)}
 .stats b{font-weight:600}
@@ -629,7 +630,7 @@ function viewMoney(){
   let h=`<div class="top"><h1>Деньги</h1><div class="month">
     <button class="icon-btn" data-act="m-prev" aria-label="Прошлый месяц">‹</button><span>${monthName(key)}</span>
     <button class="icon-btn" data-act="m-next" aria-label="Следующий месяц" ${isNext?'disabled':''}>›</button></div></div>
-  <section class="summary"><div class="label">Бюджет ${MG[mi(key)]}</div>
+  <section class="summary"><div class="label">Бюджет на ${MONTHS[mi(key)].toLowerCase()}</div>
     <div class="big num">${rub(C.inc)}</div>
     ${C.card?`<p class="brk num">нал ${rub(C.cash)} · безнал ${rub(C.card)}</p>`:''}
     <p class="brk" style="margin:0">Заработано за ${MONTHS[mi(prev)].toLowerCase()}${isNext?' · копится сейчас':''}</p></section>
@@ -637,7 +638,7 @@ function viewMoney(){
   <div class="group">`;
   if(tax.acc||mTax){
     h+=`<button class="budget-row" data-act="tax">
-      <div class="line1"><span>${TAX_CAT.name} · ${getTaxRate()}%</span>${tax.dueNow>0?`<span class="st need">К оплате ${rub(tax.dueNow)}</span>`:tax.cur>0?`<span class="st plain">Копится ${rub(tax.cur)}</span>`:`<span class="st ok">Оплачено</span>`}</div>
+      <div class="line1"><span>${TAX_CAT.name} · ${getTaxRate()}%</span>${tax.dueNow>0?`<span class="st need">К оплате ${rub(tax.dueNow)}</span>`:tax.cur>0?`<span class="st plain num">${rub(tax.cur)}</span>`:`<span class="st ok">Оплачено</span>`}</div>
       <small class="num">За ${monthName(shiftMonth(key,-1)).toLowerCase()} начислено ${rub(mTax)} с безнала${tax.dueNow>0?' · оплатить до 28 числа':''}</small></button>`;
   }
   const rows=cats.map(c=>({...c,sp:spent[c.id]||0,a:alloc[c.id]||0}));
@@ -648,8 +649,7 @@ function viewMoney(){
     if(isSave(c)){
       const bal=saveBalance(c.id);
       h+=`<button class="budget-row" data-act="env" data-cat="${esc(c.id)}">
-        <div class="line1"><span>${esc(c.name)}</span></div>
-        <small class="num">Накоплено <b class="${bal<0?'neg':''}">${bal<0?'−':''}${rub(Math.abs(bal))}</b>${c.a?' · в этом бюджете +'+rub(c.a):''}${c.sp?' · потрачено '+rub(c.sp):''}</small></button>`;
+        <div class="line1"><span>${esc(c.name)}</span><span class="st plain num ${bal<0?'neg':''}">${bal<0?'−':''}${rub(Math.abs(bal))}</span></div></button>`;
       continue;
     }
     const lim=+c.limit||0, scale=Math.max(lim,c.a,c.sp)||1, overSpent=c.sp>c.a;
