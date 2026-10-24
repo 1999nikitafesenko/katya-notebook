@@ -1,5 +1,5 @@
 // Offline support: the app shell is cached, pages are refreshed from the network when online
-const CACHE = 'katya-1a3794ae';
+const CACHE = 'katya-bb81997f';
 const SHELL = ['./', './manifest.webmanifest', './apple-touch-icon.png', './icon-192.png', './icon-512.png'];
 self.addEventListener('install', e => { e.waitUntil(caches.open(CACHE).then(c => c.addAll(SHELL))); self.skipWaiting(); });
 self.addEventListener('activate', e => { e.waitUntil(caches.keys().then(ks => Promise.all(ks.filter(k => k !== CACHE).map(k => caches.delete(k))))); self.clients.claim(); });

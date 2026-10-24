@@ -985,13 +985,9 @@ function openClient(id,startView){
       if(view==='edit'){
         const w=editId?S.data.workouts[editId]:{date:today(),title:'',text:''};
         const already=isToday(c.lastMinusAt);
-        const parts=(w.title||'').split(/\s*[,+]\s*/).filter(Boolean);
-        if(!sel)sel=new Set(parts.filter(x=>PRESETS.includes(x)));
-        const custom=parts.filter(x=>!PRESETS.includes(x)).join(', ');
         h+=`<button class="link-btn" data-w="back">‹ Все тренировки</button>
         <label class="field"><span>Дата</span><input type="date" id="w-date" value="${esc(w.date)}"></label>
-        <div class="field"><span>Что тренировали · можно выбрать несколько</span><div class="chips">${PRESETS.map(p=>`<button class="chip ${sel.has(p)?'on':''}" data-preset="${p}" aria-pressed="${sel.has(p)}">${p}</button>`).join('')}</div>
-          <input id="w-title" value="${esc(custom)}" placeholder="Своё, например «день ног»" style="margin-top:8px" autocomplete="off"></div>
+        <label class="field"><span>Название</span><input id="w-title" value="${esc(w.title)}" placeholder="Например, день ног" autocomplete="off"></label>
         <label class="field"><span>Упражнения и заметки</span><textarea id="w-text" rows="9" placeholder="Присед 4×10 по 40 кг&#10;Румынская тяга 3×12&#10;Выпады 3×10 на каждую">${esc(w.text)}</textarea></label>
         ${editId?'':`<label class="checkrow"><input type="checkbox" id="w-dec" ${already?'':'checked'}><span>${already?'Сегодня уже списано в '+hm(new Date(c.lastMinusAt))+'. Списать ещё одну':'Списать тренировку'} (сейчас ${n})</span></label>`}
         <div class="actions"><button class="primary" data-w="save">Сохранить</button>${editId?'<button class="secondary" data-w="del">Удалить тренировку</button>':''}</div>`;
@@ -1009,7 +1005,7 @@ function openClient(id,startView){
           if(imp.skipped)h+=`<p class="hint">Строк до первой даты пропущено: ${imp.skipped}.</p>`;
         }
       }else{
-        h+=`<div class="seg seg3">${[['log','Тренировки'],['hist','Списания'],['set','Данные']].map(([k,l])=>`<button data-cv="${k}" class="${view===k?'on':''}">${l}</button>`).join('')}</div>`;
+        h+=`<div class="seg seg3">${[['log','Тренировки'],['hist','Списания'],['notes','Заметки']].map(([k,l])=>`<button data-cv="${k}" class="${view===k?'on':''}">${l}</button>`).join('')}</div>`;
         if(view==='log'){
           const ws=workouts();
           h+=`<div class="row2" style="margin-bottom:12px"><button class="primary" data-w="new">+ Тренировка</button><button class="neutral" data-w="import">Из заметок</button></div>`;
@@ -1019,6 +1015,13 @@ function openClient(id,startView){
           const hist=c.history||[];
           h+=hist.length?`<ul class="hist group">${hist.map(x=>`<li><span class="num ${x.d<0?'neg':'pos'}">${x.d>0?'+':'−'}${Math.abs(x.d)} ${plural(x.d,['тренировка','тренировки','тренировок'])} · осталось ${x.v}</span><span>${when(x.at)}</span></li>`).join('')}</ul>`
             :'<div class="empty">Изменений ещё не было</div>';
+        }else if(view==='notes'){
+          const ns=(c.notes||[]).slice().sort((a,b)=>b.date.localeCompare(a.date)||b.at-a.at);
+          h+=`<div class="row2" style="grid-template-columns:1fr 150px;margin-bottom:8px"><span></span><input type="date" id="cn-date" value="${today()}" style="border:0;border-radius:12px;background:var(--surface);padding:10px;font-size:16px"></div>
+          <label class="field"><textarea id="cn-text" rows="3" placeholder="Заметка о клиенте"></textarea></label>
+          <div class="actions" style="margin-top:0"><button class="primary" data-w="nadd">Сохранить заметку</button></div>`;
+          h+=ns.length?`<div class="group" style="margin-top:14px">${ns.map(n=>`<div class="wk"><div class="wk-h"><span>${fmtDay(n.date)}</span><button class="x" data-ndel="${esc(n.id)}" aria-label="Удалить">×</button></div><span class="wt">${esc(n.text)}</span></div>`).join('')}</div>`:'';
+          h+=`<button class="link-btn" data-cv="set" style="margin-top:14px;color:var(--muted)">Изменить имя или удалить клиента</button>`;
         }else{
           h+=`<label class="field"><span>Имя и фамилия</span><input id="e-name" value="${esc(c.name)}" autocomplete="off"></label>
           <div class="actions"><button class="primary" data-w="rename">Сохранить</button><button class="secondary" data-w="cdel">Удалить клиента</button></div>`;
@@ -1034,19 +1037,20 @@ function openClient(id,startView){
       const r=new FileReader();r.onload=()=>{raw=String(r.result);imp=null;draw()};r.readAsText(e.target.files[0]);
     };
     panel.onclick=e=>{
-      const b=e.target.closest('[data-w],[data-cv],[data-wid],[data-preset],[data-irm]');if(!b)return;
+      const b=e.target.closest('[data-w],[data-cv],[data-wid],[data-irm],[data-ndel]');if(!b)return;
+      if(b.dataset.ndel){const c=S.data.clients[id];Back.put('clients',id,{...c,notes:(c.notes||[]).filter(n=>n.id!==b.dataset.ndel)});draw();return}
       if(b.dataset.cv){view=b.dataset.cv;draw();return}
       if(b.dataset.wid){editId=b.dataset.wid;sel=null;view='edit';draw();return}
-      if(b.dataset.preset){const p=b.dataset.preset;sel.has(p)?sel.delete(p):sel.add(p);
-        b.classList.toggle('on',sel.has(p));b.setAttribute('aria-pressed',sel.has(p));return}
       if(b.dataset.irm!=null){imp.items.splice(+b.dataset.irm,1);draw();return}
       const c=S.data.clients[id];
       switch(b.dataset.w){
+        case 'nadd':{const t=panel.querySelector('#cn-text').value.trim();if(!t){toast('Напишите заметку');return}
+          const c=S.data.clients[id];Back.put('clients',id,{...c,notes:[...(c.notes||[]),{id:uid(),date:panel.querySelector('#cn-date').value||today(),text:t,at:Date.now()}]});draw();toast('Заметка сохранена');break}
         case 'back':view='log';editId=null;draw();break;
         case 'new':editId=null;sel=null;view='edit';draw();setTimeout(()=>panel.querySelector('#w-text')?.focus(),50);break;
         case 'import':view='import';imp=null;draw();break;
         case 'save':{
-          const date=panel.querySelector('#w-date').value||today(),title=[...PRESETS.filter(x=>sel.has(x)),panel.querySelector('#w-title').value.trim()].filter(Boolean).join(', '),text=panel.querySelector('#w-text').value.replace(/\s+$/,'');
+          const date=panel.querySelector('#w-date').value||today(),title=panel.querySelector('#w-title').value.trim(),text=panel.querySelector('#w-text').value.replace(/\s+$/,'');
           if(!title&&!text){toast('Напишите, что тренировали');return}
           const old=editId&&S.data.workouts[editId];
           Back.put('workouts',editId||uid(),{clientId:id,date,title,text,createdAt:old?old.createdAt:Date.now()});
