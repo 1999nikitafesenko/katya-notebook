@@ -499,6 +499,7 @@ const Back={
     }else{
       S.mode='local';
       try{const raw=localStorage.getItem(LS_KEY);if(raw)Object.assign(S.data,JSON.parse(raw))}catch(e){}
+      autoSnapshot();
       try{navigator.storage&&navigator.storage.persist&&navigator.storage.persist()}catch(e){}
     }
     render();
@@ -1608,7 +1609,10 @@ function openSkin(){
     <p class="hint">Все данные хранятся только на этом телефоне. Сохраняйте копию раз в неделю и отправляйте её себе в Telegram или в «Файлы»: если телефон потеряется или сбросится, из копии всё вернётся.</p>
     <div class="actions"><button class="primary" data-act="backup-save">Сохранить копию</button>
       <label class="neutral filebtn">Восстановить из копии<input type="file" accept=".json,application/json" id="b-file" class="vh"></label>
-      <div id="b-restore"></div></div>`:''}
+      <div id="b-restore"></div></div>
+    <h2>Автокопии на телефоне</h2>
+    ${snapKeys().length?`<div class="group stats">${snapKeys().map(k=>`<div><span>${dayTitle(k.slice(SNAP.length))}</span><button class="link-btn" data-snap="${k}">Вернуть</button></div>`).join('')}</div>`:'<div class="empty">Первая автокопия появится завтра</div>'}
+    <p class="hint">Каждый день при первом открытии приложение само сохраняет копию всех данных внутри телефона и хранит последние 7 дней. Это спасёт, если что-то случайно удалили. От потери телефона спасает только «Сохранить копию» в Telegram или «Файлы».</p>`:''}
     <h2>Сброс</h2>
     <p class="hint">Удаляет все операции, клиентов, тренировки, события и заметки. Тема останется. Перед сбросом можно сохранить копию.</p>
     <div class="actions"><button class="secondary" id="b-reset">Удалить все данные</button></div>`,
@@ -1634,6 +1638,13 @@ function openSkin(){
       };r.readAsText(e.target.files[0]);
     };
     panel.onclick=e=>{
+      const sn=e.target.closest('[data-snap]');
+      if(sn){
+        if(!sn.classList.contains('armed')){sn.classList.add('armed');sn.textContent='Точно? Нажмите ещё раз';return}
+        try{const bk=JSON.parse(localStorage.getItem(sn.dataset.snap));
+          S.data={tx:{},clients:{},tasks:{},alloc:{},workouts:{},daynotes:{},notes:{},budget:null,flow:null,...bk.data};Back.saveLocal();
+          closeSheet();render(true);toast('Данные возвращены на '+dayTitle(sn.dataset.snap.slice(SNAP.length)))}catch(_){toast('Не удалось прочитать копию')}
+        return}
       if(e.target.id==='look-reset'){
         if(!e.target.classList.contains('armed')){e.target.classList.add('armed');e.target.textContent='Точно сбросить цвета? Нажмите ещё раз';return}
         try{for(const k of [':skin',':colors',':tone'])localStorage.removeItem(LS_KEY+k)}catch(_){}
@@ -1654,6 +1665,17 @@ function openSkin(){
     panel.querySelectorAll('[data-skin]').forEach(x=>x.classList.toggle('on',x===b))}});
 }
 
+// once a day the app keeps a copy of everything inside the phone; the last 7 days can be restored from settings
+const SNAP=LS_KEY+':snap:';
+function snapKeys(){const ks=[];try{for(let i=0;i<localStorage.length;i++){const k=localStorage.key(i);if(k.startsWith(SNAP))ks.push(k)}}catch(e){}return ks.sort().reverse()}
+function autoSnapshot(){
+  try{
+    const has=Object.keys(S.data.tx).length+Object.keys(S.data.clients).length+Object.keys(S.data.tasks).length+Object.keys(S.data.notes||{}).length;
+    const k=SNAP+today();if(!has||localStorage.getItem(k))return;
+    localStorage.setItem(k,JSON.stringify({savedAt:Date.now(),data:S.data}));
+    snapKeys().slice(7).forEach(x=>localStorage.removeItem(x));
+  }catch(e){}
+}
 const lastBackup=()=>{try{return +localStorage.getItem(LS_KEY+':backup')||0}catch(e){return 0}};
 async function saveBackup(){
   const body=JSON.stringify({app:'katya-notebook',version:1,savedAt:Date.now(),data:S.data});
