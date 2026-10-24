@@ -1201,8 +1201,8 @@ function parseBulk(text){
     const ref=b.created?parseDay(b.created):new Date();ref.setDate(ref.getDate()+40);
     const hit=parseDateLine(ls[0],ref);
     const date=hit?hit.date:(b.created||today());
-    const title=hit?cap(hit.title):(b.created?cap(ls[0].trim()):'');
-    const body=(hit||b.created?ls.slice(1):ls).join('\n').trim();
+    const title=hit?cap(hit.title):'';
+    const body=(hit?ls.slice(1):ls).join('\n').trim();
     items.push({folder:b.folder,date,title,text:body});
   }
   return items;
@@ -1223,7 +1223,7 @@ function openBulkImport(){
           <li>Откройте приложение <b>«Команды»</b> → <b>+</b> (новая команда).</li>
           <li>Добавьте действие <b>«Найти заметки»</b>. Фильтры не ставьте, «Ограничить» выключите.</li>
           <li>Добавьте <b>«Повторить с каждым»</b> (повторять с заметками из шага 2).</li>
-          <li>Внутри повтора добавьте действие <b>«Текст»</b> и наберите в нём:<br><code>=== </code>, затем переменная <b>«Повторяемый объект» → Папка</b>, затем <code> | </code>, затем <b>«Повторяемый объект» → Дата создания</b> (нажмите на неё → «Формат даты» → «Пользовательский» → <code>yyyy-MM-dd</code>), с новой строки <b>«Повторяемый объект» → Текст</b>.</li>
+          <li>Внутри повтора добавьте действие <b>«Текст»</b> и наберите в нём:<br><code>=== </code>, затем переменная <b>«Повторяемый объект» → Папка</b>, затем <code> | </code>, затем <b>«Повторяемый объект» → Дата создания</b> (нажмите на неё → «Формат даты» → «Пользовательский» → <code>yyyy-MM-dd</code>), с новой строки <b>«Повтор объекта» → Название</b>, и ещё с новой строки <b>«Повтор объекта» → Текст</b>.</li>
           <li>После повтора добавьте <b>«Объединить текст»</b> (с результатами повтора, через «Новые строки»).</li>
           <li>Последним добавьте <b>«Скопировать в буфер обмена»</b>.</li>
           <li>Назовите команду «Заметки в Блокнот» и запустите. Разрешите доступ к Заметкам.</li></ol></details>`;
@@ -1248,17 +1248,20 @@ function openBulkImport(){
         skip=new Set(Object.keys(Object.fromEntries(items.map(i=>[i.folder,1]))).filter(f=>/стар|recently|недавно удал/i.test(f)));draw();panel.scrollTop=0}
       if(id==='bi-back'){items=null;draw()}
       if(id==='bi-go'){
-        const now=Date.now();let made=0,dup=0,newC=0;const puts=[];
+        const now=Date.now();let made=0,dup=0,newC=0,fixed=0;const puts=[];
         const groups={};for(const it of items)if(!skip.has(it.folder))(groups[it.folder]||(groups[it.folder]=[])).push(it);
         for(const [f,list] of Object.entries(groups)){
           let c=byName(f);
           if(!c){const cid=uid()+newC;c={id:cid,name:f,sessions:0,updatedAt:now,lastMinusAt:null,createdAt:now,history:[]};Back.put('clients',cid,c);newC++}
-          const have=new Set(Object.values(S.data.workouts).filter(w=>w.clientId===c.id).map(w=>w.date+'|'+w.text));
+          const mine=Object.values(S.data.workouts).filter(w=>w.clientId===c.id);
+          const have=new Set(mine.map(w=>w.date+'|'+w.text));
           for(const it of list){const k=it.date+'|'+it.text;if(have.has(k)){dup++;continue}have.add(k);
+            const broken=mine.find(w=>!w.fixed&&((w.title||'')+'\n'+(w.text||'')).trim()===it.text.trim());
+            if(broken){broken.fixed=1;Back.put('workouts',broken.id,{clientId:c.id,date:it.date,title:it.title,text:it.text,createdAt:broken.createdAt||now});fixed++;continue}
             puts.push([uid()+puts.length,{clientId:c.id,date:it.date,title:it.title,text:it.text,createdAt:now+puts.length}]);made++}
         }
         if(puts.length)Back.putMany('workouts',puts);
-        closeSheet();toast(`Добавлено тренировок: ${made}${newC?', новых клиентов: '+newC:''}${dup?', пропущено повторов: '+dup:''}`);
+        closeSheet();toast(`Добавлено тренировок: ${made}${fixed?', исправлено: '+fixed:''}${newC?', новых клиентов: '+newC:''}${dup?', пропущено повторов: '+dup:''}`);
       }
     };
   });
