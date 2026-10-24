@@ -1017,7 +1017,7 @@ function openClient(id,startView){
             :'<div class="empty">Изменений ещё не было</div>';
         }else if(view==='notes'){
           const memo=c.memo!=null?c.memo:(c.notes||[]).map(n=>fmtDay(n.date)+': '+n.text).join('\n');
-          h+=`<label class="field"><textarea id="cn-memo" rows="10" placeholder="Заметки о клиенте. Сохраняются сами">${esc(memo)}</textarea></label>`;
+          h+=`<label class="field"><textarea id="cn-memo" data-cid="${esc(id)}" rows="10" placeholder="Заметки о клиенте. Сохраняются сами">${esc(memo)}</textarea></label>`;
           h+=`<button class="link-btn" data-cv="set" style="margin-top:14px;color:var(--muted)">Изменить имя или удалить клиента</button>`;
         }else{
           h+=`<label class="field"><span>Имя и фамилия</span><input id="e-name" value="${esc(c.name)}" autocomplete="off"></label>
@@ -1032,7 +1032,7 @@ function openClient(id,startView){
     let memoT;const saveMemo=v=>{const c=S.data.clients[id];if(c&&c.memo!==v)Back.put('clients',id,{...c,memo:v})};
     panel.oninput=e=>{if(e.target.id==='i-text')raw=e.target.value;
       if(e.target.id==='cn-memo'){clearTimeout(memoT);const v=e.target.value;memoT=setTimeout(()=>saveMemo(v),600)}};
-    panel.addEventListener('focusout',e=>{if(e.target.id==='cn-memo'){clearTimeout(memoT);saveMemo(e.target.value)}});
+    panel.addEventListener('focusout',e=>{if(e.target.id==='cn-memo'&&e.target.dataset.cid===id){clearTimeout(memoT);saveMemo(e.target.value)}});
     panel.onchange=e=>{
       if(e.target.id!=='i-file'||!e.target.files[0])return;
       const r=new FileReader();r.onload=()=>{raw=String(r.result);imp=null;draw()};r.readAsText(e.target.files[0]);
