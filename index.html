@@ -407,6 +407,7 @@ h2{font-size:13px;font-weight:600;text-transform:uppercase;letter-spacing:.06em;
 .primary{border:0;border-radius:14px;background:var(--accent);color:var(--accent-ink);font-weight:600;font-size:17px;padding:14px}
 .secondary{border:0;border-radius:14px;background:var(--surface);color:var(--out);font-weight:600;font-size:16px;padding:13px}
 .secondary.armed{background:var(--out);color:var(--surface)}
+.catedit2{display:none}
 .catcard{display:grid;gap:8px;padding-bottom:12px;margin-bottom:12px;border-bottom:1px solid var(--line)}
 .catedit{display:grid;grid-template-columns:1fr 40px 40px;gap:8px}
 .catedit2{display:grid;grid-template-columns:1fr 120px;gap:8px;align-items:center}
@@ -483,7 +484,7 @@ const dayTitle=s=>{const d=parseDay(s);return d.getDate()+' '+MG[d.getMonth()]+'
 
 /* ---------- state ---------- */
 const S={
-  tab:'money', month:today().slice(0,7), calMonth:today().slice(0,7), selDay:today(),
+  tab:'money', month:shiftMonth(today().slice(0,7),1), calMonth:today().slice(0,7), selDay:today(),
   data:{tx:{},clients:{},tasks:{},alloc:{},workouts:{},daynotes:{},budget:null,flow:null}, mode:'loading', confirm:null, dirty:false
 };
 try{const t=localStorage.getItem(LS_KEY+':tab');if(['money','clients','tasks'].includes(t))S.tab=t;if(localStorage.getItem(LS_KEY+':cal')==='week')S.calView='week'}catch(e){}
@@ -575,7 +576,7 @@ function taxDue(){
   payments.sort((a,b)=>b.date.localeCompare(a.date));
   return {acc,paid,due,dueNow,cur:r2(Math.max(0,due-dueNow)),byMonth,payments};
 }
-const isSave=c=>c.kind==='save';
+const isSave=c=>true; // every list is a piggy bank
 function saveBalance(id){
   let a=0;for(const m of Object.values(S.data.alloc))a+=+(m.byCat&&m.byCat[id])||0;
   for(const t of Object.values(S.data.tx))if(t.type==='out'&&t.cat===id)a-=+t.amount||0;
@@ -632,58 +633,29 @@ setInterval(()=>render(),60000);
 
 /* ---------- money ---------- */
 function viewMoney(){
-  const flow=getFlow(), act=activeMonth(), first=firstMonth()||act;
-  if(S.month>act)S.month=act;
-  if(S.month<first)S.month=first;
-  const key=S.month, isAct=key===act, nk=nextKey(key);
-  const list=Object.values(S.data.tx).filter(t=>txM(t)===key)
+  // the page shows the budget for next month, built from what is earned this month; arrows go back in time
+  const def=nextKey(today().slice(0,7));
+  if(!S.month||S.month>def)S.month=def;
+  const key=S.month,isNext=key===def,prev=shiftMonth(key,-1);
+  const list=Object.values(S.data.tx).filter(t=>t.type==='in'?txFor(t)===key:txM(t)===key)
     .sort((a,b)=>b.date.localeCompare(a.date)||(b.createdAt||0)-(a.createdAt||0));
   const spent={};
   for(const t of list)if(t.type==='out'){const a=+t.amount||0;spent[t.cat||'_']=(spent[t.cat||'_']||0)+a}
-  const cats=getCats();
-  const {alloc,allocTotal}=getAlloc(key);
-  const mTax=monthTax(key), tax=taxDue();
-  const B=budgetOf(key), sp=spentBudget(key), rest=r2(B.total-sp-allocSave(key));
-  const free=r2(B.total-allocTotal);
-  const need=cats.reduce((s,c)=>s+(isSave(c)?0:Math.max(0,(+c.limit||0)-(alloc[c.id]||0))),0);
-  const mi=k=>+k.slice(5)-1, low=k=>MONTHS[mi(k)].toLowerCase();
+  const cats=getCats(),{alloc}=getAlloc(key),mTax=monthTax(prev),tax=taxDue(),C=collected(key);
+  const mi=k=>+k.slice(5)-1;
   let h=`<div class="top"><h1>Деньги</h1><div class="month">
-    <button class="icon-btn" data-act="m-prev" aria-label="Прошлый месяц" ${key<=first?'disabled':''}>‹</button><span>${monthName(key)}</span>
-    <button class="icon-btn" data-act="m-next" aria-label="Следующий месяц" ${isAct?'disabled':''}>›</button></div></div>`;
-  if(!flow){
-    h+=`<section class="summary"><div class="label">Начало учёта</div>
-      <div class="setup-q">С какой суммы начинаем ${MG[mi(act)]}?</div>
-      <p class="hint" style="margin:0 0 12px">Сколько денег сейчас есть на этот месяц, то есть накоплено раньше. Всё, что придёт дальше, будет копиться на ${low(nextKey(act))}.</p>
-      <div class="addtask" style="margin:0"><input type="text" id="s-start" class="num" inputmode="numeric" placeholder="Сумма, ₽" autocomplete="off"><button class="pill-btn" style="width:auto;border-radius:12px;font-size:15px" data-act="flow-start">Начать</button></div></section>`;
-  }else{
-    const parts=[B.start?'старт '+rub(B.start):'',B.net?'собрано за '+low(shiftMonth(key,-1))+' '+rub(B.net):'',B.carry?'остаток '+(B.carry<0?'−':'+')+rub(Math.abs(B.carry)):''].filter(Boolean);
-    h+=`<section class="summary"><div class="label">Бюджет ${MG[mi(key)]}${isAct?'':' · месяц закрыт'}</div>
-    <div class="big num ${B.total<0?'neg':''}">${B.total<0?'−':''}${rub(Math.abs(B.total))}</div>
-    ${parts.length?`<p class="brk num">${parts.join(' · ')}</p>`:''}
-    <div class="split"><div><span class="label">Потрачено</span><b class="num neg">−${rub(sp)}</b></div>
-    <div><span class="label">${isAct?'Осталось':'Перешло дальше'}</span><b class="num ${rest<0?'neg':''}">${rest<0?'−':''}${rub(Math.abs(rest))}</b></div></div>
-    <div class="free-row"><div><span class="label">${free<0?'Разложено больше, чем есть':'Не разложено по спискам'}</span>
-      <b class="num ${free<0?'neg':''}">${free<0?'−':''}${rub(Math.abs(free))}</b></div>
-      <button class="pill-btn" data-act="alloc">Распределить</button></div></section>`;
-  }
-  if(isAct){
-    const C=collected(nk), planTotal=cats.reduce((s,c)=>s+(isSave(c)?0:+c.limit||0),0);
-    const est=r2(C.net+(flow?rest:0));
-    h+=`<section class="nextcard"><div class="line1"><span>Копится на ${low(nk)}</span><b class="num">${rub(C.net)}</b></div>
-      ${planTotal?`<div class="bar"><i class="sp" style="width:${Math.min(100,C.net/planTotal*100)}%"></i></div>
-      <small class="num ${C.net>=planTotal?'pos':''}">${C.net>=planTotal?'План на месяц собран, сверху '+rub(C.net-planTotal):'Собрано '+rub(C.net)+' из '+rub(planTotal)+' по плану · не хватает '+rub(planTotal-C.net)}</small>`:''}
-      ${C.inc?`<small class="num">Пришло ${rub(C.inc)}${C.card?` (нал ${rub(C.cash)} · безнал ${rub(C.card)}) · налог −${rub(C.tax)}`:''}</small>`:'<small>Сюда попадают все новые поступления.</small>'}
-      ${flow?`<small class="num">С остатком этого месяца бюджет ${MG[mi(nk)]} будет около <b>${rub(est)}</b></small>
-      ${today().slice(0,7)>act?`<p class="due">Уже ${low(today().slice(0,7))}. Когда будете готовы, начните новый месяц.</p>`:''}
-      <button class="neutral" data-act="flow-next" data-est="${est}">Перейти к ${MG[mi(nk)].replace(/я$/,'ю').replace(/та$/,'ту')}</button>`:''}
-    </section>`;
-  }
-  h+=`<div class="h2row"><h2>Списки · ${need?'не хватает '+rub(need):'всё покрыто'}</h2><button class="link-btn" data-act="budget">Изменить</button></div>
+    <button class="icon-btn" data-act="m-prev" aria-label="Прошлый месяц">‹</button><span>${monthName(key)}</span>
+    <button class="icon-btn" data-act="m-next" aria-label="Следующий месяц" ${isNext?'disabled':''}>›</button></div></div>
+  <section class="summary"><div class="label">Бюджет ${MG[mi(key)]}</div>
+    <div class="big num">${rub(C.inc)}</div>
+    ${C.card?`<p class="brk num">нал ${rub(C.cash)} · безнал ${rub(C.card)}</p>`:''}
+    <p class="brk" style="margin:0">Заработано за ${MONTHS[mi(prev)].toLowerCase()}${isNext?' · копится сейчас':''}</p></section>
+  <div class="h2row"><h2>Списки</h2><span><button class="link-btn" data-act="alloc">Распределить</button> <button class="link-btn" data-act="budget">Изменить</button></span></div>
   <div class="group">`;
   if(tax.acc||mTax){
     h+=`<button class="budget-row" data-act="tax">
       <div class="line1"><span>${TAX_CAT.name} · ${getTaxRate()}%</span>${tax.dueNow>0?`<span class="st need">К оплате ${rub(tax.dueNow)}</span>`:tax.cur>0?`<span class="st plain">Копится ${rub(tax.cur)}</span>`:`<span class="st ok">Оплачено</span>`}</div>
-      <small class="num">За ${monthName(key).toLowerCase()} начислено ${rub(mTax)} с безнала${tax.dueNow>0?' · оплатить до 28 числа':''}</small></button>`;
+      <small class="num">За ${monthName(shiftMonth(key,-1)).toLowerCase()} начислено ${rub(mTax)} с безнала${tax.dueNow>0?' · оплатить до 28 числа':''}</small></button>`;
   }
   const rows=cats.map(c=>({...c,sp:spent[c.id]||0,a:alloc[c.id]||0}));
   const known=new Set([...cats.map(c=>c.id),'tax']);
@@ -693,8 +665,8 @@ function viewMoney(){
     if(isSave(c)){
       const bal=saveBalance(c.id);
       h+=`<button class="budget-row" data-act="env" data-cat="${esc(c.id)}">
-        <div class="line1"><span>${esc(c.name)}</span><span class="st plain">Копилка</span></div>
-        <small class="num">Накоплено <b class="${bal<0?'neg':''}">${bal<0?'−':''}${rub(Math.abs(bal))}</b>${c.a?' · в этом месяце +'+rub(c.a):''}${c.sp?' · потрачено '+rub(c.sp):''}</small></button>`;
+        <div class="line1"><span>${esc(c.name)}</span></div>
+        <small class="num">Накоплено <b class="${bal<0?'neg':''}">${bal<0?'−':''}${rub(Math.abs(bal))}</b>${c.a?' · в этом бюджете +'+rub(c.a):''}${c.sp?' · потрачено '+rub(c.sp):''}</small></button>`;
       continue;
     }
     const lim=+c.limit||0, scale=Math.max(lim,c.a,c.sp)||1, overSpent=c.sp>c.a;
@@ -710,7 +682,7 @@ function viewMoney(){
   }
   h+=`</div><h2>Операции</h2>`;
   if(!list.length){
-    h+=`<div class="empty"><b>За ${monthName(key).toLowerCase()} операций нет</b>Нажмите «+», чтобы записать оплату от клиента или расход.</div>`;
+    h+=`<div class="empty"><b>За ${monthName(key).toLowerCase()} операций нет</b>Нажмите «+», чтобы записать оплату от клиента.</div>`;
   }else{
     let cur=null;
     for(const t of list){
@@ -743,13 +715,10 @@ function openTx(id,preset){
   const rate=getTaxRate();
   const names=[...new Set([...Object.values(S.data.clients).map(c=>c.name),...Object.values(S.data.tx).filter(x=>x.type==='in'&&x.who).map(x=>x.who)])].sort();
   openSheet(`<h3>${ex?'Операция':'Новая операция'}</h3>
-    <div class="seg"><button data-type="in" class="${t.type==='in'?'on':''}">Поступление</button><button data-type="out" class="${t.type==='out'?'on':''}">Расход</button></div>
     <label class="field"><span>Сумма, ₽</span><input id="f-amount" class="amount num" inputmode="decimal" placeholder="0" value="${esc(t.amount)}"></label>
     <div class="field" id="f-pay-wrap" ${t.type==='in'?'':'hidden'}><span>Как заплатили</span>
       <div class="seg" style="margin-bottom:0"><button data-pay="cash" class="${t.pay==='cash'?'on':''}">Наличные</button><button data-pay="card" class="${t.pay==='card'?'on':''}">Безнал</button></div>
       <p class="hint num" id="f-taxhint"></p></div>
-    <div class="field" id="f-for-wrap" ${t.type==='in'?'':'hidden'}><span>В какой бюджет</span>
-      <div class="chips">${forOpts.map(k=>`<button class="chip ${k===t.for?'on':''}" data-for="${k}">${k===nk?'Копить на '+MONTHS[+k.slice(5)-1].toLowerCase():k===act?'В этот месяц ('+MONTHS[+k.slice(5)-1].toLowerCase()+')':monthName(k)}</button>`).join('')}</div></div>
     <label class="field" id="f-who-wrap" ${t.type==='in'?'':'hidden'}><span>От кого</span><input id="f-who" list="f-names" placeholder="Имя клиента" value="${esc(t.who)}" autocomplete="off">
       <datalist id="f-names">${names.map(n=>`<option value="${esc(n)}">`).join('')}</datalist></label>
     <div class="field" id="f-cat-wrap" ${t.type==='out'?'':'hidden'}><span>Куда</span><div class="chips">
@@ -779,7 +748,7 @@ function openTx(id,preset){
         const date=panel.querySelector('#f-date').value||today();
         const rec={type:t.type,amount:Math.round(amount*100)/100,date,note:panel.querySelector('#f-note').value.trim(),createdAt:t.createdAt||Date.now(),m:ex?txM(ex):act};
         if(t.type==='in'){
-          rec.who=panel.querySelector('#f-who').value.trim();rec.pay=t.pay;rec.for=t.for;
+          rec.who=panel.querySelector('#f-who').value.trim();rec.pay=t.pay;rec.for=nextKey(date.slice(0,7));
           rec.tax=t.pay==='card'?(ex&&ex.pay==='card'&&+ex.amount===rec.amount&&ex.tax!=null?ex.tax:Math.round(rec.amount*rate)/100):0;
           try{localStorage.setItem(LS_KEY+':pay',t.pay)}catch(e){}
         }
@@ -787,8 +756,7 @@ function openTx(id,preset){
         Back.put('tx',ex?id:uid(),rec);
         S.month=rec.m;
         closeSheet();render();
-        if(t.type==='in'&&rec.for===act) toast('Поступление добавлено в бюджет месяца','Распределить',()=>openAlloc());
-        else if(t.type==='in') toast('Отложено на '+MONTHS[+rec.for.slice(5)-1].toLowerCase());
+        if(t.type==='in'){S.month=rec.for;render(true);toast('Поступление записано в бюджет '+MG[+rec.for.slice(5)-1],'Распределить',()=>openAlloc())}
         else toast('Расход записан');
       }
       if(e.target.id==='f-del'){
@@ -801,12 +769,12 @@ function openTx(id,preset){
 }
 
 function openAlloc(focusCat){
-  const key=S.month, cats=getCats(), total=budgetOf(key).total;
+  const key=S.month, cats=getCats(), total=collected(key).inc;
   const vals={...getAlloc(key).alloc};
   const freeNow=()=>total-cats.reduce((s,c)=>s+(vals[c.id]||0),0);
   openSheet(`<h3>Распределить: ${monthName(key).toLowerCase()}</h3>
     <div class="freebox"><span>Бюджет ${rub(total)}</span><span>Свободно <b class="num" id="a-free"></b></span></div>
-    <button class="link-btn" id="a-auto">Заполнить по порядку списков</button>
+    
     <div class="group" id="a-rows">${cats.map(c=>{const lim=isSave(c)?0:+c.limit||0,sp=monthSpent(key,c.id);return `<div class="alloc-row">
       <div class="nm"><b>${esc(c.name)}</b><small class="num">${isSave(c)?'копилка · накоплено '+rub(saveBalance(c.id)):(lim?'план '+rub(lim):'без плана')+(sp?' · потрачено '+rub(sp):'')}</small></div>
       ${lim?`<button class="fill" data-fill="${esc(c.id)}">до плана</button>`:'<span></span>'}
@@ -851,16 +819,15 @@ function openEnv(id){
       :`<div><span>Отложено${lim?' из '+rub(lim):''}</span><b class="num">${rub(a)}</b></div><div><span>Потрачено</span><b class="num">${rub(sp)}</b></div><div><span>На руках</span><b class="num ${left<0?'neg':''}">${left<0?'−':''}${rub(Math.abs(left))}</b></div>`}</div>
     <p class="hint">${isSave(c)?'Копилка без лимита: всё, что отложено, копится из месяца в месяц.':monthName(key)+'. В новом месяце конверт начинается с нуля.'}</p>
     <div class="actions"><button class="primary" id="v-add">Пополнить</button>
-      <button class="neutral" id="v-spend">Записать трату</button>
-      ${!isSave(c)&&left>0?`<button class="secondary" id="v-reset">Обнулить конверт</button><p class="hint" style="text-align:center">Запишет расход ${rub(left)}: например, аренда оплачена</p>`:''}</div>`,
+      ${left>0?`<button class="secondary" id="v-reset">Обнулить копилку</button><p class="hint" style="text-align:center">Накопленные ${rub(left)} спишутся, копилка начнётся с нуля</p>`:''}</div>`,
   panel=>{panel.onclick=e=>{
     if(e.target.id==='v-add'){closeSheet();openAlloc(id)}
     if(e.target.id==='v-spend'){closeSheet();openTx(null,{type:'out',cat:id})}
     if(e.target.id==='v-reset'){
       if(!e.target.classList.contains('armed')){e.target.classList.add('armed');e.target.textContent='Да, обнулить: −'+rub(left);return}
       const date=key===today().slice(0,7)?today():key+'-'+pad(new Date(+key.slice(0,4),+key.slice(5),0).getDate());
-      const tid=uid();Back.put('tx',tid,{type:'out',amount:r2(left),cat:id,catName:c.name,date,note:'Конверт обнулён',createdAt:Date.now()});
-      closeSheet();toast(c.name+': конверт обнулён','Отменить',()=>Back.del('tx',tid));
+      const tid=uid();Back.put('tx',tid,{type:'out',amount:r2(left),cat:id,catName:c.name,date,m:key,note:'Копилка обнулена',createdAt:Date.now()});
+      closeSheet();toast(c.name+': копилка обнулена','Отменить',()=>Back.del('tx',tid));
     }
   }});
 }
