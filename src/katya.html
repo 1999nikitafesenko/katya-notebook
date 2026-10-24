@@ -164,6 +164,14 @@ h2{font-size:13px;font-weight:600;text-transform:uppercase;letter-spacing:.06em;
 .note-row small{font-size:14px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .note-row small .num{color:var(--ink);margin-right:6px}
 .note-ta{width:100%;border:0;background:transparent;resize:none;font-size:17px;line-height:1.5;padding:4px 2px;outline:none;color:var(--ink);overflow:hidden}
+.bi-row{display:flex;gap:12px;align-items:center;padding:10px 14px}
+.bi-row input{width:22px;height:22px;accent-color:var(--accent);flex:none}
+.bi-row b{display:block;font-weight:600}
+.bi-row small{display:block;font-size:13px;color:var(--muted)}
+.howto{margin-top:14px;background:var(--surface);border-radius:14px;padding:12px 14px;font-size:14px;line-height:1.45}
+.howto summary{font-weight:600;color:var(--accent);cursor:pointer}
+.howto ol{padding-left:20px;margin:10px 0 0;display:grid;gap:8px}
+.howto code{background:var(--bg);border-radius:4px;padding:0 4px}
 .pill-btn{border:0;border-radius:999px;background:var(--accent);color:var(--accent-ink);font-weight:600;padding:9px 16px;font-size:15px}
 
 /* appearance picker */
@@ -888,7 +896,8 @@ const isToday=ts=>ts&&ymd(new Date(ts))===today();
 
 function viewClients(){
   const list=Object.values(S.data.clients).map(clientView).sort((a,b)=>a.name.localeCompare(b.name,'ru'));
-  let h=`<div class="top"><h1>Тренировки</h1><button class="pill-btn" data-act="client-new">+ Клиент</button></div>`;
+  let h=`<div class="top"><h1>Тренировки</h1><button class="pill-btn" data-act="client-new">+ Клиент</button></div>
+  <button class="link-btn" data-act="bulk-import" style="margin:-6px 0 8px 4px">Импорт тренировок из Заметок iPhone</button>`;
   if(!list.length) return h+`<div class="empty"><b>Клиентов пока нет</b>Добавьте клиента и сколько у него оплачено тренировок. Потом списывайте одной кнопкой «−».</div>`;
   if(list.length>6) h+=`<input class="search" id="c-search" type="search" placeholder="Найти клиента" autocomplete="off">`;
   h+='<div class="group" id="c-list">';
@@ -1152,6 +1161,87 @@ function openNoteEd(id){
       if(e.target.id==='ne-del'){
         if(!e.target.classList.contains('armed')){e.target.classList.add('armed');e.target.textContent='Нажмите ещё раз, чтобы удалить';return}
         const copy={...cur()};S.sheetClose=null;Back.del('notes',id);closeSheet();toast('Заметка удалена','Вернуть',()=>Back.put('notes',id,copy));
+      }
+    };
+  });
+}
+
+/* Import from iPhone Notes. A Shortcut gathers every note as
+     === <folder> | <yyyy-MM-dd creation date>
+     <note text: first line "29.09 ноги", then exercises>
+   folder = client, title date = workout date (year taken from when the note was created) */
+function parseBulk(text){
+  const out=[];let cur=null;
+  for(const raw of String(text).replace(/\r/g,'').split('\n')){
+    const m=raw.match(/^\s*===\s*(.*?)\s*(?:\|\s*(\d{4}-\d{2}-\d{2}))?\s*$/);
+    if(m){cur={folder:m[1].trim(),created:m[2]||'',lines:[]};out.push(cur);continue}
+    if(cur)cur.lines.push(raw.trimEnd());
+  }
+  const items=[];
+  for(const b of out){
+    const ls=b.lines;while(ls.length&&!ls[0].trim())ls.shift();while(ls.length&&!ls[ls.length-1].trim())ls.pop();
+    if(!b.folder||!ls.length)continue;
+    const ref=b.created?parseDay(b.created):new Date();ref.setDate(ref.getDate()+40);
+    const hit=parseDateLine(ls[0],ref);
+    const date=hit?hit.date:(b.created||today());
+    const title=hit?cap(hit.title):(b.created?cap(ls[0].trim()):'');
+    const body=(hit||b.created?ls.slice(1):ls).join('\n').trim();
+    items.push({folder:b.folder,date,title,text:body});
+  }
+  return items;
+}
+function openBulkImport(){
+  let items=null,skip=new Set();
+  openSheet('<div id="bi"></div>',panel=>{
+    panel.classList.add('full');
+    const box=panel.querySelector('#bi');
+    const byName=n=>Object.values(S.data.clients).find(c=>c.name.trim().toLowerCase()===n.trim().toLowerCase());
+    const draw=()=>{
+      let h=`<div class="dhead"><h3>Импорт из Заметок</h3><button class="dclose" data-act="close" aria-label="Закрыть">×</button></div>`;
+      if(!items){
+        h+=`<p class="hint" style="margin:0 4px 10px">1. Один раз соберите команду в приложении «Команды», инструкция ниже.<br>2. Запустите её: все заметки скопируются.<br>3. Вставьте сюда и нажмите «Разобрать».</p>
+        <label class="field"><textarea id="bi-text" rows="7" placeholder="=== Аня Арсункаева | 2026-09-29&#10;29.09 ноги&#10;Болгарские выпады 4х15 по 6 кг"></textarea></label>
+        <div class="row2"><button class="neutral" id="bi-paste">Вставить из буфера</button><button class="primary" id="bi-parse">Разобрать</button></div>
+        <details class="howto"><summary>Как собрать команду (5 минут, один раз)</summary><ol>
+          <li>Откройте приложение <b>«Команды»</b> → <b>+</b> (новая команда).</li>
+          <li>Добавьте действие <b>«Найти заметки»</b>. Фильтры не ставьте, «Ограничить» выключите.</li>
+          <li>Добавьте <b>«Повторить с каждым»</b> (повторять с заметками из шага 2).</li>
+          <li>Внутри повтора добавьте действие <b>«Текст»</b> и наберите в нём:<br><code>=== </code>, затем переменная <b>«Повторяемый объект» → Папка</b>, затем <code> | </code>, затем <b>«Повторяемый объект» → Дата создания</b> (нажмите на неё → «Формат даты» → «Пользовательский» → <code>yyyy-MM-dd</code>), с новой строки <b>«Повторяемый объект» → Текст</b>.</li>
+          <li>После повтора добавьте <b>«Объединить текст»</b> (с результатами повтора, через «Новые строки»).</li>
+          <li>Последним добавьте <b>«Скопировать в буфер обмена»</b>.</li>
+          <li>Назовите команду «Заметки в Блокнот» и запустите. Разрешите доступ к Заметкам.</li></ol></details>`;
+      }else{
+        const groups={};for(const it of items)(groups[it.folder]||(groups[it.folder]=[])).push(it);
+        const names=Object.keys(groups).sort((a,b)=>a.localeCompare(b,'ru'));
+        const n=names.filter(f=>!skip.has(f)).reduce((s,f)=>s+groups[f].length,0);
+        h+=`<p class="hint" style="margin:0 4px 10px">Найдено папок: ${names.length}, заметок: ${items.length}. Каждая папка станет клиентом. Снимите галочки с папок, которые не про тренировки.</p>
+        <div class="group">${names.map(f=>`<label class="bi-row"><input type="checkbox" data-f="${esc(f)}" ${skip.has(f)?'':'checked'}><span><b>${esc(f)}</b><small>${groups[f].length} ${plural(groups[f].length,['тренировка','тренировки','тренировок'])} · ${byName(f)?'клиент уже есть':'новый клиент'}</small></span></label>`).join('')}</div>
+        <div class="actions"><button class="primary" id="bi-go" ${n?'':'disabled'}>Добавить ${n} ${plural(n,['тренировку','тренировки','тренировок'])}</button><button class="neutral" id="bi-back">Назад</button></div>
+        <p class="hint">Повторы не добавятся: если у клиента уже есть тренировка с той же датой и текстом, она пропускается.</p>`;
+      }
+      box.innerHTML=h;
+    };
+    draw();
+    panel.onchange=e=>{const f=e.target.dataset&&e.target.dataset.f;if(f==null)return;e.target.checked?skip.delete(f):skip.add(f);draw()};
+    panel.onclick=async e=>{
+      const id=e.target.id;
+      if(id==='bi-paste'){try{panel.querySelector('#bi-text').value=await navigator.clipboard.readText()}catch(_){toast('Нажмите в поле и выберите «Вставить»')}}
+      if(id==='bi-parse'){const v=panel.querySelector('#bi-text').value;items=parseBulk(v);
+        if(!items.length){items=null;toast('Не нашла заметок. Текст должен начинаться со строк «=== Папка | дата»');return}
+        skip=new Set(Object.keys(Object.fromEntries(items.map(i=>[i.folder,1]))).filter(f=>/стар|recently|недавно удал/i.test(f)));draw();panel.scrollTop=0}
+      if(id==='bi-back'){items=null;draw()}
+      if(id==='bi-go'){
+        const now=Date.now();let made=0,dup=0,newC=0;const puts=[];
+        const groups={};for(const it of items)if(!skip.has(it.folder))(groups[it.folder]||(groups[it.folder]=[])).push(it);
+        for(const [f,list] of Object.entries(groups)){
+          let c=byName(f);
+          if(!c){const cid=uid()+newC;c={id:cid,name:f,sessions:0,updatedAt:now,lastMinusAt:null,createdAt:now,history:[]};Back.put('clients',cid,c);newC++}
+          const have=new Set(Object.values(S.data.workouts).filter(w=>w.clientId===c.id).map(w=>w.date+'|'+w.text));
+          for(const it of list){const k=it.date+'|'+it.text;if(have.has(k)){dup++;continue}have.add(k);
+            puts.push([uid()+puts.length,{clientId:c.id,date:it.date,title:it.title,text:it.text,createdAt:now+puts.length}]);made++}
+        }
+        if(puts.length)Back.putMany('workouts',puts);
+        closeSheet();toast(`Добавлено тренировок: ${made}${newC?', новых клиентов: '+newC:''}${dup?', пропущено повторов: '+dup:''}`);
       }
     };
   });
@@ -1778,6 +1868,7 @@ document.addEventListener('click',e=>{
     case 'tax':openTax();break;
     case 'env':openEnv(el.dataset.cat);break;
     case 'client-new':openClientNew();break;
+    case 'bulk-import':openBulkImport();break;
     case 'client-open':openClient(id);break;
     case 'dec':decClient(id,false);break;
     case 'dec-force':decClient(id,true);break;
