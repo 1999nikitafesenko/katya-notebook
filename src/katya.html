@@ -638,8 +638,7 @@ function viewMoney(){
   <div class="group">`;
   if(tax.acc||mTax){
     h+=`<button class="budget-row" data-act="tax">
-      <div class="line1"><span>${TAX_CAT.name} · ${getTaxRate()}%</span>${tax.dueNow>0?`<span class="st need">К оплате ${rub(tax.dueNow)}</span>`:tax.cur>0?`<span class="st plain num">${rub(tax.cur)}</span>`:`<span class="st ok">Оплачено</span>`}</div>
-      <small class="num">За ${monthName(shiftMonth(key,-1)).toLowerCase()} начислено ${rub(mTax)} с безнала${tax.dueNow>0?' · оплатить до 28 числа':''}</small></button>`;
+      <div class="line1"><span>${TAX_CAT.name} · ${getTaxRate()}%</span>${tax.dueNow>0?`<span class="st need">К оплате ${rub(tax.dueNow)}</span>`:tax.cur>0?`<span class="st plain num">${rub(tax.cur)}</span>`:`<span class="st ok">Оплачено</span>`}</div></button>`;
   }
   const rows=cats.map(c=>({...c,sp:spent[c.id]||0,a:alloc[c.id]||0}));
   const known=new Set([...cats.map(c=>c.id),'tax']);
