@@ -204,7 +204,12 @@ h2{font-size:13px;font-weight:600;text-transform:uppercase;letter-spacing:.06em;
 .wk-title b{font-weight:600}
 .wk-title small{font-size:12px;color:var(--muted)}
 .wk-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;align-items:start}
-.wk-col{display:grid;gap:10px;min-width:0}
+.wk-col{display:flex;flex-direction:column;gap:10px;min-width:0}
+.wk-grid{align-items:stretch}
+.pday.short{flex:1;display:flex;flex-direction:column}
+.pday.short .pday-b{flex:1 1 0;height:0;min-height:57px}
+.wk-copy{flex:none;border:1.5px dashed var(--accent);background:var(--accent-soft);color:var(--accent);border-radius:14px;padding:11px 8px;font-weight:600;font-size:14px}
+.wk-copy.armed{background:var(--accent);color:var(--accent-ink);border-style:solid}
 .pday{position:relative;cursor:pointer;display:block;width:100%;border:0;padding:0;text-align:left;background:var(--paper-img,none),var(--paper);border-radius:14px;overflow:hidden;box-shadow:0 1px 3px rgba(0,0,0,.12);color:var(--paper-ink)}
 .pday-h{display:flex;justify-content:space-between;align-items:center;gap:6px;padding:7px 9px 7px 11px;background:var(--head-img,none),var(--head);color:var(--paper-ink);font-size:13px;white-space:nowrap}
 .pday-h > span{overflow:hidden;text-overflow:ellipsis}
@@ -215,7 +220,7 @@ h2{font-size:13px;font-weight:600;text-transform:uppercase;letter-spacing:.06em;
 .tdot{display:inline-block;width:7px;height:7px;border-radius:50%;background:var(--out);margin-right:5px;vertical-align:2px}
 .pday-b{display:block;height:236px;overflow-y:auto;overscroll-behavior:contain;-webkit-overflow-scrolling:touch;scrollbar-width:none;padding:2px 8px 6px;font-size:11px;line-height:19px;background-image:repeating-linear-gradient(to bottom,transparent 0 18px,var(--paper-line) 18px 19px);background-origin:content-box;background-attachment:local}
 .pday-b::-webkit-scrollbar{display:none}
-.pday.short .pday-b{height:84px}
+.pday.short .pday-b{height:auto}
 .pday-more{position:absolute;right:6px;bottom:6px;width:30px;height:22px;border:0;border-radius:11px;background:var(--out);color:#fff;font-size:16px;line-height:12px;padding:0 0 4px;opacity:0;pointer-events:none;transition:opacity .15s}
 .pday.has-more .pday-more{opacity:.9;pointer-events:auto}
 .pp{display:block;font-size:9.5px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;height:19px}
@@ -1311,7 +1316,7 @@ function weekView(){
   return `<section class="cal week-head"><div class="head" style="margin:0"><button class="icon-btn" data-act="w-prev" aria-label="Прошлая неделя">‹</button>
     <span class="wk-title"><b>${MONTHS[mid.getMonth()]} ${mid.getFullYear()}</b><small>Неделя ${isoWeek(a)}</small></span>
     ${ws!==weekStartOf(td)?'<button class="link-btn" data-act="go-today">Сегодня</button>':''}<button class="icon-btn" data-act="w-next" aria-label="Следующая неделя">›</button></div></section>
-    <div class="wk-grid"><div class="wk-col">${[0,1,2].map(card).join('')}</div><div class="wk-col">${[3,4,5,6].map(card).join('')}</div></div>`;
+    <div class="wk-grid"><div class="wk-col">${[0,1,2].map(card).join('')}</div><div class="wk-col">${[3,4,5,6].map(card).join('')}<button class="wk-copy" data-act="week-copy" data-ws="${ws}">Повторить неделю</button></div></div>`;
 }
 function openDay(startDay){
   let s=startDay,colorFor=null;
@@ -1752,6 +1757,20 @@ document.addEventListener('click',e=>{
     case 'cal-view':S.calView=el.dataset.v;S.weekStart=weekStartOf(S.selDay);try{localStorage.setItem(LS_KEY+':cal',S.calView)}catch(_){};render(true);break;
     case 'w-prev':case 'w-next':{const d=parseDay(S.weekStart||weekStartOf(S.selDay));d.setDate(d.getDate()+(el.dataset.act==='w-next'?7:-7));S.weekStart=ymd(d);render(true);break}
     case 'day-open':openDay(el.dataset.day);break;
+    case 'week-copy':{
+      if(!el.classList.contains('armed')){el.classList.add('armed');el.textContent='Скопировать на следующую неделю?';break}
+      const ws=parseDay(el.dataset.ws),made=[],now=Date.now();
+      for(let i=0;i<7;i++){
+        const d=new Date(ws);d.setDate(ws.getDate()+i);const s=ymd(d);const n=new Date(d);n.setDate(d.getDate()+7);const ns=ymd(n);
+        const have=eventsOn(ns).map(e=>partOf(e)+'|'+(e.time||'')+'|'+e.title);
+        // repeating events already appear next week on their own
+        for(const ev of eventsOn(s))if(!isRep(ev)&&!have.includes(partOf(ev)+'|'+(ev.time||'')+'|'+ev.title)){
+          const id=uid()+made.length;made.push(id);
+          Back.put('tasks',id,{...ev,id:undefined,date:ns,part:partOf(ev),done:false,doneDates:[],skipDates:[],createdAt:now+made.length});
+        }
+      }
+      S.weekStart=ymd(new Date(ws.getFullYear(),ws.getMonth(),ws.getDate()+7));render(true);scrollTo(0,0);
+      toast(made.length?'Перенесено записей: '+made.length:'Нечего переносить: всё уже есть','Отменить',()=>{made.forEach(id=>Back.del('tasks',id))});break}
     case 'pday-down':{const bd=el.parentElement.querySelector('.pday-b');bd.scrollBy({top:96,behavior:'smooth'});break}
     case 'ev-new':openEvent(null,el.dataset.day);break;
     case 'ev-open':openEvent(id,el.dataset.day);break;
