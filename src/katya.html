@@ -262,6 +262,8 @@ h2{font-size:13px;font-weight:600;text-transform:uppercase;letter-spacing:.06em;
 .ws.today small{background:var(--out);color:#fff;border-radius:5px;padding:0 6px}
 .ws.sel{background:var(--accent-soft)}
 .paper{background-color:var(--paper);color:var(--paper-ink);border-radius:16px;padding:6px 12px 10px;background-image:repeating-linear-gradient(to bottom,transparent 0 31px,var(--paper-line) 31px 32px),var(--paper-img,none);background-origin:content-box;background-attachment:local}
+/* an empty line for a new entry stays blank; its number shows once something is typed */
+.pline.add:has(.ed:empty) .pn{visibility:hidden}
 .pline{display:flex;align-items:center;gap:6px;height:32px;font-size:17px;line-height:32px}
 .pline.pp2{font-weight:700;letter-spacing:.04em;text-transform:uppercase;font-size:15px}
 .pchk{width:18px;height:18px;flex:none;border-radius:5px;border:1.5px solid color-mix(in srgb,var(--c,var(--muted)) 70%,var(--line));background:none;padding:0;display:grid;place-items:center;font-size:12px;font-weight:700;color:#fff;line-height:1}
@@ -1482,7 +1484,7 @@ function openDay(startDay){
             <button class="pchk ${dn?'on':''}" data-dtoggle="${esc(e.id)}" aria-label="${dn?'Снять отметку':'Отметить сделанным'}">${dn?'✓':''}</button>
             <span class="pn">${j+1})</span><span class="pt"><span class="hl ed" contenteditable="true" spellcheck="false" data-edit="${esc(e.id)}">${esc(itemText(e))}</span></span></div>`;
         });
-        h+=`<div class="pline add"><span class="pchk ghost"></span><span class="pn">${it.length+1})</span><span class="pt"><span class="ed" contenteditable="true" spellcheck="false" data-addp="${k}" data-ph="${it.length?'':'например, 08.30 Ирина'}"></span></span></div><div class="pline"></div>`;
+        h+=`<div class="pline add"><span class="pchk ghost"></span><span class="pn">${it.length+1})</span><span class="pt"><span class="ed" contenteditable="true" spellcheck="false" data-addp="${k}" data-ph=""></span></span></div><div class="pline"></div>`;
       }
       h+=`${richEditor(note&&note.html,'Заметка: планы, мысли, что угодно…')}
         <div class="pline"></div><div class="pline"></div><div class="pline"></div></div>`;
