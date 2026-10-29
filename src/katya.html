@@ -172,6 +172,13 @@ h2{font-size:13px;font-weight:600;text-transform:uppercase;letter-spacing:.06em;
 .howto summary{font-weight:600;color:var(--accent);cursor:pointer}
 .howto ol{padding-left:20px;margin:10px 0 0;display:grid;gap:8px}
 .howto code{background:var(--bg);border-radius:4px;padding:0 4px}
+#edbar{position:fixed;left:0;right:0;top:0;z-index:60;display:flex;align-items:center;gap:2px;padding:6px max(10px,env(safe-area-inset-right,0px)) 6px max(10px,env(safe-area-inset-left,0px));background:var(--surface);border-top:1px solid var(--line);box-shadow:0 -4px 14px rgba(0,0,0,.08)}
+#edbar > button{width:44px;height:40px;border:0;background:none;border-radius:10px;color:var(--ink);display:grid;place-items:center;padding:0}
+#edbar > button svg{width:24px;height:24px}
+#edbar > button.ok{margin-left:auto;width:auto;padding:0 16px;background:var(--accent-soft);color:var(--accent);font-weight:700;font-size:16px}
+#edbar.add > [data-eb="color"],#edbar.add > [data-eb="done"],#edbar.add > [data-eb="del"]{opacity:.3}
+#edbar .pal{position:absolute;left:0;right:0;bottom:100%;display:flex;flex-wrap:wrap;gap:10px;padding:10px 14px;background:var(--surface);border-top:1px solid var(--line)}
+#edbar .pal button{width:30px;height:30px;border-radius:50%;border:0;background:var(--c);padding:0}
 .pill-btn{border:0;border-radius:999px;background:var(--accent);color:var(--accent-ink);font-weight:600;padding:9px 16px;font-size:15px}
 
 /* appearance picker */
@@ -449,6 +456,12 @@ h2{font-size:13px;font-weight:600;text-transform:uppercase;letter-spacing:.06em;
 
 <div class="sheet" id="sheet" hidden><div class="scrim" data-act="close"></div><div class="panel" id="panel" role="dialog" aria-modal="true"></div></div>
 <div class="toast" id="toast" hidden></div>
+<div id="edbar" hidden><div class="pal" hidden></div>
+  <button data-eb="color" aria-label="Цвет маркера"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="m14.5 4.5 5 5L10 19H5v-5z"/><path d="M4 22h16" stroke="var(--accent)" stroke-width="3"/></svg></button>
+  <button data-eb="undo" aria-label="Отменить"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M9 14 4 9l5-5"/><path d="M4 9h10.5a5.5 5.5 0 0 1 0 11H11"/></svg></button>
+  <button data-eb="done" aria-label="Отметить сделанным"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m5 12.5 4.5 4.5L19 7.5"/></svg></button>
+  <button data-eb="del" aria-label="Удалить"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 7h16M10 11v6M14 11v6M6 7l1 13h10l1-13M9 7V4h6v3"/></svg></button>
+  <button data-eb="ok" class="ok">OK</button></div>
 
 <script>
 const MONTHS=['Январь','Февраль','Март','Апрель','Май','Июнь','Июль','Август','Сентябрь','Октябрь','Ноябрь','Декабрь'];
@@ -1147,7 +1160,7 @@ function openNoteEd(id){
     if(cur()&&cur().text===text)return;
     Back.put('notes',id,{text,createdAt:cur()?cur().createdAt:Date.now(),updatedAt:Date.now()});};
   const n=cur();
-  openSheet(`<div class="dhead"><span class="hint" style="margin:0">${n?noteDate(n.updatedAt):'Новая заметка'}</span><button class="link-btn" id="ne-done" style="font-size:17px">Готово</button></div>
+  openSheet(`<div class="dhead"><span class="hint" style="margin:0">${n?noteDate(n.updatedAt):'Новая заметка'}</span><span><button class="link-btn" id="ne-undo" style="font-size:20px" aria-label="Отменить">↶</button> <button class="link-btn" id="ne-done" style="font-size:17px">Готово</button></span></div>
     <textarea id="ne-text" class="note-ta" placeholder="Заголовок с первой строки…">${esc(n?n.text:'')}</textarea>
     ${n?'<div class="actions"><button class="secondary" id="ne-del">Удалить заметку</button></div>':''}`,
   panel=>{
@@ -1155,7 +1168,11 @@ function openNoteEd(id){
     const ta=panel.querySelector('#ne-text');
     const grow=()=>{ta.style.height='auto';ta.style.height=Math.max(ta.scrollHeight,window.innerHeight*.6)+'px'};grow();
     if(!n)setTimeout(()=>ta.focus(),250);
-    panel.oninput=e=>{if(e.target===ta){grow();clearTimeout(t);t=setTimeout(save,600)}};
+    const hist=[ta.value];let ht;
+    panel.oninput=e=>{if(e.target===ta){grow();clearTimeout(t);t=setTimeout(save,600);clearTimeout(ht);ht=setTimeout(()=>{if(hist[hist.length-1]!==ta.value)hist.push(ta.value)},500)}};
+    panel.querySelector('#ne-undo').addEventListener('pointerdown',e=>{e.preventDefault();clearTimeout(ht);
+      if(hist[hist.length-1]!==ta.value)hist.push(ta.value);
+      if(hist.length<2){toast('Отменять нечего');return}hist.pop();ta.value=hist[hist.length-1];grow();save()});
     panel.onclick=e=>{
       if(e.target.id==='ne-done')closeSheet();
       if(e.target.id==='ne-del'){
@@ -1463,10 +1480,7 @@ function openDay(startDay){
         it.forEach((e,j)=>{const dn=isDone(e,s);
           h+=`<div class="pline ${dn?'done':''}" style="--c:${evColor(e.color)}">
             <button class="pchk ${dn?'on':''}" data-dtoggle="${esc(e.id)}" aria-label="${dn?'Снять отметку':'Отметить сделанным'}">${dn?'✓':''}</button>
-            <span class="pn">${j+1})</span><span class="pt"><span class="hl ed" contenteditable="true" spellcheck="false" data-edit="${esc(e.id)}">${esc(itemText(e))}</span></span>
-            <button class="dot-btn sm" data-dcolor="${esc(e.id)}" aria-label="Цвет и удаление"></button><button class="pmore" data-dmore="${esc(e.id)}" aria-label="Повтор, время, заметка">⋯</button></div>`;
-          if(colorFor===e.id)h+=`<div class="palette-row">${EV_COLORS.map(([ck,cc,cn])=>`<button class="sw ${(e.color||'def')===ck?'on':''}" data-setc="${ck}" data-cfor="${esc(e.id)}" style="--c:${cc}" aria-label="${cn}"></button>`).join('')}
-            <button class="link-btn" data-ddel="${esc(e.id)}" style="color:var(--out)">Удалить${isRep(e)?' на этот день':''}</button></div>`;
+            <span class="pn">${j+1})</span><span class="pt"><span class="hl ed" contenteditable="true" spellcheck="false" data-edit="${esc(e.id)}">${esc(itemText(e))}</span></span></div>`;
         });
         h+=`<div class="pline add"><span class="pchk ghost"></span><span class="pn">${it.length+1})</span><span class="pt"><span class="ed" contenteditable="true" spellcheck="false" data-addp="${k}" data-ph="${it.length?'':'например, 08.30 Ирина'}"></span></span></div><div class="pline"></div>`;
       }
@@ -1475,20 +1489,41 @@ function openDay(startDay){
       box.innerHTML=h;bindRich(box);
       if(focusPart){const f=box.querySelector(`[data-addp="${focusPart}"]`);if(f){f.focus()}}
     };
+    const undo=[];const snap=id=>undo.push({id,prev:S.data.tasks[id]?{...S.data.tasks[id]}:null});
     const commitEdit=el=>{
       const ev=S.data.tasks[el.dataset.edit];if(!ev)return false;
       const v=parseLine(el.textContent);
-      if(!v.title&&!v.time){el.textContent=itemText(ev);toast('Чтобы удалить, нажмите цветной кружок → «Удалить»');return false}
+      if(!v.title&&!v.time){el.textContent=itemText(ev);toast('Чтобы удалить, нажмите 🗑 на панели над клавиатурой');return false}
       if(v.title===ev.title&&v.time===(ev.time||''))return false;
-      Back.put('tasks',ev.id,{...ev,title:v.title,time:v.time,part:partOf(ev)});
+      snap(ev.id);Back.put('tasks',ev.id,{...ev,title:v.title,time:v.time,part:partOf(ev)});
       return v.time!==(ev.time||'');
     };
     const commitAdd=el=>{
       const v=parseLine(el.textContent);if(!v.title&&!v.time)return false;
-      Back.put('tasks',uid(),{title:v.title,date:s,time:v.time,timeEnd:'',part:el.dataset.addp,color:'def',repeat:{freq:'none'},reminder:'none',notes:'',done:false,createdAt:Date.now()});
+      const nid=uid();undo.push({id:nid,prev:null});
+      Back.put('tasks',nid,{title:v.title,date:s,time:v.time,timeEnd:'',part:el.dataset.addp,color:'def',repeat:{freq:'none'},reminder:'none',notes:'',done:false,createdAt:Date.now()});
       return true;
     };
     draw();
+    // toolbar above the keyboard while a line is being edited: marker, undo, done, delete, OK
+    const bar=$('#edbar');let curId=null;
+    const showBar=t=>{curId=t.dataset.edit||null;bar.classList.toggle('add',!curId);bar.querySelector('.pal').hidden=true;bar.hidden=false;placeBar()};
+    box.addEventListener('focusin',e=>{if(e.target.classList&&e.target.classList.contains('ed'))showBar(e.target)});
+    box.addEventListener('focusout',()=>setTimeout(()=>{const a=document.activeElement;if(!(a&&a.classList&&a.classList.contains('ed')))bar.hidden=true},120));
+    S.sheetClose=(f=>()=>{bar.hidden=true;f()})(S.sheetClose);
+    const row=()=>curId&&box.querySelector(`[data-edit="${curId}"]`)?.closest('.pline');
+    bar.onpointerdown=e=>{
+      const b=e.target.closest('[data-eb],[data-c]');if(!b)return;e.preventDefault();
+      const a=b.dataset.eb,ev=curId&&S.data.tasks[curId];
+      if(a==='ok'){document.activeElement&&document.activeElement.blur();bar.hidden=true}
+      else if(a==='undo'){const u=undo.pop();if(!u){toast('Отменять нечего');return}
+        if(u.prev)Back.put('tasks',u.id,u.prev);else Back.del('tasks',u.id);bar.hidden=true;draw()}
+      else if(!ev)return;
+      else if(a==='color')bar.querySelector('.pal').hidden=!bar.querySelector('.pal').hidden;
+      else if(b.dataset.c){snap(ev.id);Back.put('tasks',ev.id,{...ev,color:b.dataset.c,part:partOf(ev)});row()?.style.setProperty('--c',evColor(b.dataset.c));bar.querySelector('.pal').hidden=true}
+      else if(a==='done'){snap(ev.id);toggleEvent(ev.id,s);const r=row(),dn=isDone(S.data.tasks[ev.id],s);if(r){r.classList.toggle('done',dn);const c=r.querySelector('.pchk');c.classList.toggle('on',dn);c.textContent=dn?'✓':''}}
+      else if(a==='del'){snap(ev.id);if(isRep(ev))Back.put('tasks',ev.id,{...ev,skipDates:[...(ev.skipDates||[]),s]});else Back.del('tasks',ev.id);bar.hidden=true;draw();toast('Запись удалена. Вернуть можно кнопкой ↶')}
+    };
     box.addEventListener('keydown',e=>{
       const t=e.target;if(e.key!=='Enter'||!t.classList||!t.classList.contains('ed'))return;
       e.preventDefault();
@@ -1507,7 +1542,7 @@ function openDay(startDay){
     panel.onclick=e=>{
       const b=e.target.closest('[data-dtoggle],[data-dcolor],[data-setc],[data-dmore],[data-ddel],[data-dclose],[data-dgo],[data-dweek]');if(!b)return;
       const ds=b.dataset;
-      if(ds.dtoggle){toggleEvent(ds.dtoggle,s);draw()}
+      if(ds.dtoggle){snap(ds.dtoggle);toggleEvent(ds.dtoggle,s);draw()}
       else if(ds.dgo){s=ds.dgo;colorFor=null;draw();panel.scrollTop=0}
       else if(ds.dweek){const x=parseDay(s);x.setDate(x.getDate()+ +ds.dweek);s=ymd(x);colorFor=null;draw()}
       else if(ds.dcolor){colorFor=colorFor===ds.dcolor?null:ds.dcolor;draw()}
@@ -1546,7 +1581,7 @@ function openEvent(id,day){
     <div class="row3"><label class="field"><span>Дата</span><input type="date" id="e-date" value="${esc(ev.date)}"></label>
       <label class="field"><span>Начало</span><input type="time" id="e-time" value="${esc(ev.time||'')}"></label>
       <label class="field"><span>Конец</span><input type="time" id="e-end" value="${esc(ev.timeEnd||'')}"></label></div>
-    <div class="field"><span>Повтор</span><div class="chips">${FREQS.map(([k,l])=>`<button class="chip ${ev.repeat.freq===k?'on':''}" data-freq="${k}">${l}</button>`).join('')}</div>
+    <div class="field" hidden><span>Повтор</span><div class="chips">${FREQS.map(([k,l])=>`<button class="chip ${ev.repeat.freq===k?'on':''}" data-freq="${k}">${l}</button>`).join('')}</div>
       <div id="e-rep" ${ev.repeat.freq==='none'?'hidden':''} style="margin-top:10px">
         <div class="chips" id="e-wdays" ${ev.repeat.freq==='week'?'':'hidden'} style="margin-bottom:10px">${WD_SHORT.map((w,i)=>`<button class="chip ${(ev.repeat.days||[]).includes(i)?'on':''}" data-wd="${i}">${w}</button>`).join('')}</div>
         <div class="row2"><label class="field"><span>Каждые, <b id="e-unit">${units[ev.repeat.freq]||''}</b></span><input type="number" id="e-int" min="1" inputmode="numeric" value="${+ev.repeat.interval||1}"></label>
@@ -1802,6 +1837,15 @@ async function saveBackup(){
     setTimeout(()=>URL.revokeObjectURL(url),4000);done();
   }catch(e){toast('Не получилось сохранить файл')}
 }
+
+/* ---------- keyboard toolbar ---------- */
+(function(){
+  const bar=$('#edbar');
+  bar.querySelector('.pal').innerHTML=EV_COLORS.map(([k,c,n])=>`<button data-c="${k}" style="--c:${c}" aria-label="${n}"></button>`).join('');
+  window.placeBar=()=>{const v=window.visualViewport;if(bar.hidden)return;
+    bar.style.top=((v?v.offsetTop+v.height:window.innerHeight)-bar.offsetHeight)+'px'};
+  if(window.visualViewport){visualViewport.addEventListener('resize',placeBar);visualViewport.addEventListener('scroll',placeBar)}
+})();
 
 /* ---------- sheet & toast ---------- */
 function openSheet(html,mount){
