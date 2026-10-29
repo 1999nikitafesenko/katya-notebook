@@ -1463,15 +1463,15 @@ function weekView(){
     <div class="wk-grid"><div class="wk-col">${[0,1,2].map(card).join('')}</div><div class="wk-col">${[3,4,5,6].map(card).join('')}<button class="wk-copy" data-act="week-copy" data-ws="${ws}">Повторить неделю</button></div></div>`;
 }
 function openDay(startDay){
-  let s=startDay,colorFor=null;
+  let s=startDay,colorFor=null,noteDay=null; // noteDay: the date whose note is in the editor right now
   openSheet('<div id="dd"></div>',panel=>{
     panel.classList.add('full');
     const box=panel.querySelector('#dd');
     const saveNote=()=>{
-      if(!box.querySelector('.rt'))return;
-      const html=rtValue(box),cur=(S.data.daynotes[s]&&S.data.daynotes[s].html)||'';
+      if(!box.querySelector('.rt')||!noteDay)return;
+      const html=rtValue(box),cur=(S.data.daynotes[noteDay]&&S.data.daynotes[noteDay].html)||'';
       if(html===cur)return;
-      if(html)Back.put('daynotes',s,{html,updatedAt:Date.now()});else Back.del('daynotes',s);
+      if(html)Back.put('daynotes',noteDay,{html,updatedAt:Date.now()});else Back.del('daynotes',noteDay);
     };
     S.sheetClose=saveNote;
     const draw=focusPart=>{
@@ -1496,7 +1496,7 @@ function openDay(startDay){
       }
       h+=`${richEditor(note&&note.html,'Заметка: планы, мысли, что угодно…')}
         <div class="pline"></div><div class="pline"></div><div class="pline"></div></div>`;
-      box.innerHTML=h;bindRich(box);
+      box.innerHTML=h;bindRich(box);noteDay=s;
       if(focusPart){const f=box.querySelector(`[data-addp="${focusPart}"]`);if(f){f.focus()}}
     };
     const undo=[];const snap=id=>undo.push({id,prev:S.data.tasks[id]?{...S.data.tasks[id]}:null});
