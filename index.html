@@ -235,6 +235,9 @@ h2{font-size:13px;font-weight:600;text-transform:uppercase;letter-spacing:.06em;
 .pday-h{display:flex;justify-content:space-between;align-items:center;gap:6px;padding:4px 8px 4px 10px;background:var(--head-img,none),var(--head);color:var(--paper-ink);font-size:12.5px;white-space:nowrap}
 .pday-h > span{overflow:hidden;text-overflow:ellipsis}
 .pday-h b{font-weight:700}
+.pday-tools{display:flex;align-items:center;gap:4px;flex:none;overflow:visible}
+.pday-off{border:0;background:none;padding:0 2px;font-size:13px;line-height:1;opacity:.35;filter:grayscale(1)}
+.pday-off.on{opacity:1;filter:none}
 .pday-h svg{width:16px;height:16px;flex:none;color:var(--paper-muted)}
 .pday.today .pday-h{box-shadow:inset 0 -2px 0 var(--out)}
 .pday.we .pday-h b{color:var(--out)}
@@ -518,7 +521,7 @@ const dayTitle=s=>{const d=parseDay(s);return d.getDate()+' '+MG[d.getMonth()]+'
 /* ---------- state ---------- */
 const S={
   tab:'money', month:shiftMonth(today().slice(0,7),1), calMonth:today().slice(0,7), selDay:today(),
-  data:{tx:{},clients:{},tasks:{},alloc:{},workouts:{},daynotes:{},notes:{},budget:null,flow:null}, mode:'loading', confirm:null, dirty:false
+  data:{tx:{},clients:{},tasks:{},alloc:{},workouts:{},daynotes:{},notes:{},dayoff:{},budget:null,flow:null}, mode:'loading', confirm:null, dirty:false
 };
 try{const t=localStorage.getItem(LS_KEY+':tab');if(['money','clients','tasks','notes'].includes(t))S.tab=t;if(localStorage.getItem(LS_KEY+':cal')==='week')S.calView='week'}catch(e){}
 
@@ -530,7 +533,7 @@ const Back={
     try{ if(window.claude&&window.claude.use) db=await window.claude.use('db'); }catch(e){}
     if(db){
       this.db=db; S.mode='db';
-      for(const col of ['tx','clients','tasks','alloc','workouts','daynotes','notes']){
+      for(const col of ['tx','clients','tasks','alloc','workouts','daynotes','notes','dayoff']){
         db.collection(col).onSnapshot(snap=>{
           const m={};snap.docs.forEach(d=>{m[d.id]={...d.data(),id:d.id}});
           S.data[col]=m;render();
@@ -572,10 +575,10 @@ const Back={
   // delete every record; in the shared store this clears it for everyone who opens the app
   wipe(){
     if(this.db){
-      for(const col of ['tx','clients','tasks','alloc','workouts','daynotes','notes'])for(const id of Object.keys(S.data[col]||{}))this.write('wipe',()=>this.db.doc(col+'/'+id).delete());
+      for(const col of ['tx','clients','tasks','alloc','workouts','daynotes','notes','dayoff'])for(const id of Object.keys(S.data[col]||{}))this.write('wipe',()=>this.db.doc(col+'/'+id).delete());
       for(const d of ['settings/budget','settings/flow'])this.write('wipe',()=>this.db.doc(d).delete());
     }
-    S.data={tx:{},clients:{},tasks:{},alloc:{},workouts:{},daynotes:{},notes:{},budget:null,flow:null};
+    S.data={tx:{},clients:{},tasks:{},alloc:{},workouts:{},daynotes:{},notes:{},dayoff:{},budget:null,flow:null};
     if(!this.db)this.saveLocal();
   },
   putFlow(f){
@@ -1450,19 +1453,24 @@ function updMore(b){b.parentElement.classList.toggle('has-more',b.scrollTop+b.cl
 document.addEventListener('scroll',e=>{const t=e.target;if(t.classList&&t.classList.contains('pday-b'))updMore(t)},true);
 document.addEventListener('keydown',e=>{if(e.key==='Enter'&&e.target.classList&&e.target.classList.contains('pday'))e.target.click()});
 function isoWeek(d){const t=new Date(d.getFullYear(),d.getMonth(),d.getDate()+3-wdMon(d));const j=new Date(t.getFullYear(),0,4);return 1+Math.round(((t-j)/864e5-3+wdMon(j))/7)}
+// a day off drops the morning / day / evening layout: all entries form one list
+const dayParts=s=>S.data.dayoff&&S.data.dayoff[s]?[['all','']]:PARTS;
+const PART_ORDER={morning:0,day:1,evening:2};
+const itemsIn=(evs,k)=>k==='all'?evs.slice().sort((a,b)=>PART_ORDER[partOf(a)]-PART_ORDER[partOf(b)]||sortItems(a,b)):evs.filter(e=>partOf(e)===k).sort(sortItems);
 function weekView(){
   const td=today(),ws=S.weekStart||weekStartOf(S.selDay),a=parseDay(ws),mid=new Date(a);mid.setDate(a.getDate()+3);
   const card=i=>{
     const d=new Date(a);d.setDate(a.getDate()+i);const s=ymd(d),evs=eventsOn(s),note=S.data.daynotes[s];
-    const body=PARTS.map(([k,l])=>{
-      const it=evs.filter(e=>partOf(e)===k).sort(sortItems);
-      return `<span class="pp">${l}</span>`+it.map((e,j)=>{const dn=isDone(e,s);
+    const off=!!(S.data.dayoff&&S.data.dayoff[s]);
+    const body=dayParts(s).map(([k,l])=>{
+      const it=itemsIn(evs,k);
+      return (l?`<span class="pp">${l}</span>`:'')+it.map((e,j)=>{const dn=isDone(e,s);
         return `<span class="pl ${dn?'done':''}" style="--c:${evColor(e.color)}"><button class="pchk ${dn?'on':''}" data-act="t-toggle" data-id="${esc(e.id)}" data-day="${s}" aria-label="${dn?'Снять отметку':'Отметить сделанным'}">${dn?'✓':''}</button>${j+1}) <span class="hl">${esc(itemText(e))}</span></span>`}).join('')
         +'<span class="pl"></span>'.repeat(Math.max(1,2-it.length));
     }).join('');
     return `<div class="pday ${s===td?'today':''} ${i>4?'we short':''}" data-act="day-open" data-day="${s}" role="button" tabindex="0" aria-label="${dayTitle(s)}, открыть">
       <span class="pday-h"><span>${s===td?'<i class="tdot"></i>':''}${WD_FULL[i]} <b>${d.getDate()}</b></span>
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M14 4h6v6M20 4l-6 6M10 20H4v-6M4 20l6-6"/></svg></span>
+      <span class="pday-tools"><button class="pday-off ${off?'on':''}" data-act="day-off" data-day="${s}" aria-label="${off?'Вернуть распорядок':'Сделать выходным'}">🥂</button><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M14 4h6v6M20 4l-6 6M10 20H4v-6M4 20l6-6"/></svg></span></span>
       <div class="pday-b" data-sday="${s}">${body}${note&&note.html?`<div class="pnote">${cleanHtml(note.html)}</div>`:''}</div>
       <button class="pday-more" data-act="pday-down" aria-label="Листать ниже">⌄</button></div>`;
   };
@@ -1493,9 +1501,9 @@ function openDay(startDay){
       for(let i=0;i<7;i++){const x=new Date(ws);x.setDate(ws.getDate()+i);const xs=ymd(x);
         h+=`<button class="ws ${xs===s?'sel':''} ${xs===td?'today':''} ${i>4?'we':''}" data-dgo="${xs}"><small>${WD_SHORT[i]}</small><b>${x.getDate()}</b><i class="${eventsOn(xs).length?'':'none'}"></i></button>`}
       h+=`<button class="wsnav" data-dweek="7" aria-label="Следующая неделя">›</button></div><div class="paper">`;
-      for(const [k,l] of PARTS){
-        const it=evs.filter(e=>partOf(e)===k).sort(sortItems);
-        h+=`<div class="pline pp2">${l}</div>`;
+      for(const [k,l] of dayParts(s)){
+        const it=itemsIn(evs,k);
+        if(l)h+=`<div class="pline pp2">${l}</div>`;
         it.forEach((e,j)=>{const dn=isDone(e,s);
           h+=`<div class="pline ${dn?'done':''}" style="--c:${evColor(e.color)}">
             <button class="pchk ${dn?'on':''}" data-dtoggle="${esc(e.id)}" aria-label="${dn?'Снять отметку':'Отметить сделанным'}">${dn?'✓':''}</button>
@@ -1520,7 +1528,7 @@ function openDay(startDay){
     const commitAdd=el=>{
       const v=parseLine(el.textContent);if(!v.title&&!v.time)return false;
       const nid=uid();undo.push({id:nid,prev:null});
-      Back.put('tasks',nid,{title:v.title,date:s,time:v.time,timeEnd:'',part:el.dataset.addp,color:'def',repeat:{freq:'none'},reminder:'none',notes:'',done:false,createdAt:Date.now()});
+      Back.put('tasks',nid,{title:v.title,date:s,time:v.time,timeEnd:'',part:el.dataset.addp==='all'?'day':el.dataset.addp,color:'def',repeat:{freq:'none'},reminder:'none',notes:'',done:false,createdAt:Date.now()});
       return true;
     };
     draw();
@@ -1547,7 +1555,7 @@ function openDay(startDay){
       const t=e.target;if(e.key!=='Enter'||!t.classList||!t.classList.contains('ed'))return;
       e.preventDefault();
       if(t.dataset.addp){const k=t.dataset.addp;t.dataset.done='1';if(commitAdd(t))draw(k)}
-      else{const k=partOf(S.data.tasks[t.dataset.edit]||{});t.dataset.done='1';const moved=commitEdit(t);if(moved)draw(k);else box.querySelector(`[data-addp="${k}"]`).focus()}
+      else{const k=partOf(S.data.tasks[t.dataset.edit]||{});t.dataset.done='1';const moved=commitEdit(t);if(moved)draw(k);else (box.querySelector(`[data-addp="${k}"]`)||box.querySelector('[data-addp]')).focus()}
     });
     box.addEventListener('focusout',e=>{
       const t=e.target;if(!t.classList||!t.classList.contains('ed')||t.dataset.done)return;
@@ -1797,7 +1805,7 @@ function openSkin(){
         box.innerHTML=`<button class="secondary" id="b-apply">Заменить все данные копией ${esc(when(bk.savedAt))}</button><p class="hint">Текущие данные на телефоне будут заменены.</p>`;
         box.querySelector('#b-apply').onclick=ev=>{
           if(!ev.target.classList.contains('armed')){ev.target.classList.add('armed');ev.target.textContent='Нажмите ещё раз для подтверждения';return}
-          S.data={tx:{},clients:{},tasks:{},alloc:{},workouts:{},daynotes:{},budget:null,flow:null,...bk.data};
+          S.data={tx:{},clients:{},tasks:{},alloc:{},workouts:{},daynotes:{},dayoff:{},budget:null,flow:null,...bk.data};
           Back.saveLocal();closeSheet();render(true);toast('Данные восстановлены из копии');
         };
       };r.readAsText(e.target.files[0]);
@@ -1807,7 +1815,7 @@ function openSkin(){
       if(sn){
         if(!sn.classList.contains('armed')){sn.classList.add('armed');sn.textContent='Точно? Нажмите ещё раз';return}
         try{const bk=JSON.parse(localStorage.getItem(sn.dataset.snap));
-          S.data={tx:{},clients:{},tasks:{},alloc:{},workouts:{},daynotes:{},notes:{},budget:null,flow:null,...bk.data};Back.saveLocal();
+          S.data={tx:{},clients:{},tasks:{},alloc:{},workouts:{},daynotes:{},notes:{},dayoff:{},budget:null,flow:null,...bk.data};Back.saveLocal();
           closeSheet();render(true);toast('Данные возвращены на '+dayTitle(sn.dataset.snap.slice(SNAP.length)))}catch(_){toast('Не удалось прочитать копию')}
         return}
       if(e.target.id==='look-reset'){
@@ -1961,6 +1969,7 @@ document.addEventListener('click',e=>{
     case 'cal-view':S.calView=el.dataset.v;S.weekStart=weekStartOf(S.selDay);try{localStorage.setItem(LS_KEY+':cal',S.calView)}catch(_){};render(true);break;
     case 'w-prev':case 'w-next':{const d=parseDay(S.weekStart||weekStartOf(S.selDay));d.setDate(d.getDate()+(el.dataset.act==='w-next'?7:-7));S.weekStart=ymd(d);render(true);break}
     case 'day-open':openDay(el.dataset.day);break;
+    case 'day-off':{const d=el.dataset.day;if(S.data.dayoff&&S.data.dayoff[d])Back.del('dayoff',d);else Back.put('dayoff',d,{on:true});break}
     case 'week-copy':{
       if(!el.classList.contains('armed')){el.classList.add('armed');el.textContent='Скопировать на следующую неделю?';break}
       const ws=parseDay(el.dataset.ws),made=[],now=Date.now();
