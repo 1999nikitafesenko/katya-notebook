@@ -1006,7 +1006,6 @@ function openClient(id,startView){
         <label class="field"><span>Дата</span><input type="date" id="w-date" value="${esc(w.date)}"></label>
         <label class="field"><span>Название</span><input id="w-title" value="${esc(w.title)}" placeholder="Например, день ног" autocomplete="off"></label>
         <label class="field"><span>Упражнения и заметки</span><textarea id="w-text" rows="9" placeholder="Присед 4×10 по 40 кг&#10;Румынская тяга 3×12&#10;Выпады 3×10 на каждую">${esc(w.text)}</textarea></label>
-        ${editId?'':`<label class="checkrow"><input type="checkbox" id="w-dec" ${already?'':'checked'}><span>${already?'Сегодня уже списано в '+hm(new Date(c.lastMinusAt))+'. Списать ещё одну':'Списать тренировку'} (сейчас ${n})</span></label>`}
         <div class="actions"><button class="primary" data-w="save">Сохранить</button>${editId?'<button class="secondary" data-w="del">Удалить тренировку</button>':''}</div>`;
       }else if(view==='import'){
         h+=`<button class="link-btn" data-w="back">‹ Все тренировки</button>
@@ -1072,11 +1071,7 @@ function openClient(id,startView){
           if(!title&&!text){toast('Напишите, что тренировали');return}
           const old=editId&&S.data.workouts[editId];
           Back.put('workouts',editId||uid(),{clientId:id,date,title,text,createdAt:old?old.createdAt:Date.now()});
-          const dec=!editId&&panel.querySelector('#w-dec')?.checked;
-          view='log';editId=null;draw();
-          if(dec){const cv=clientView(S.data.clients[id]);changeClient(id,(+cv.sessions||0)-1,'dec')}
-          else toast('Тренировка сохранена');
-          draw();break;
+          view='log';editId=null;draw();toast('Тренировка сохранена');break;
         }
         case 'del':{
           if(!arm(b,'Нажмите ещё раз, чтобы удалить'))return;
