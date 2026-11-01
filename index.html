@@ -616,10 +616,10 @@ function taxDue(){
   return {acc,paid,due,dueNow,cur:r2(Math.max(0,due-dueNow)),byMonth,payments};
 }
 const isSave=c=>true; // every list is a piggy bank
-function saveBalance(id){
-  let a=0;for(const m of Object.values(S.data.alloc))a+=+(m.byCat&&m.byCat[id])||0;
-  for(const t of Object.values(S.data.tx))if(t.type==='out'&&t.cat===id)a-=+t.amount||0;
-  return a;
+// each budget month has its own envelopes: what was put in that month minus what was zeroed in it
+function saveBalance(id,key){
+  const a=+((S.data.alloc[key]||{}).byCat||{})[id]||0;
+  return a-monthSpent(key,id);
 }
 /* Budget months: money earned during a month funds the next one. Each operation remembers
    the budget month it was recorded in (m) and, for income, the month it funds (for). */
@@ -701,7 +701,7 @@ function viewMoney(){
   if(orphan) rows.push({id:'_',name:'Без категории',limit:0,sp:orphan,a:0});
   for(const c of rows){
     if(isSave(c)){
-      const bal=saveBalance(c.id);
+      const bal=saveBalance(c.id,key);
       h+=`<button class="budget-row" data-act="env" data-cat="${esc(c.id)}">
         <div class="line1"><span>${esc(c.name)}</span><span class="st plain num ${bal<0?'neg':''}">${bal<0?'−':''}${rub(Math.abs(bal))}</span></div></button>`;
       continue;
@@ -849,12 +849,12 @@ function openAlloc(focusCat){
 function openEnv(id){
   const c=getCats().find(x=>x.id===id);if(!c)return;
   const key=S.month,{alloc}=getAlloc(key),a=alloc[id]||0,sp=monthSpent(key,id),lim=+c.limit||0;
-  const left=isSave(c)?saveBalance(id):a-sp;
+  const left=isSave(c)?saveBalance(id,key):a-sp;
   openSheet(`<h3>${esc(c.name)}</h3>
     <div class="group stats">${isSave(c)
-      ?`<div><span>Накоплено всего</span><b class="num">${rub(left)}</b></div><div><span>Отложено в этом месяце</span><b class="num">${rub(a)}</b></div><div><span>Потрачено в этом месяце</span><b class="num">${rub(sp)}</b></div>`
+      ?`<div><span>В конверте на ${MONTHS[+key.slice(5)-1].toLowerCase()}</span><b class="num">${rub(left)}</b></div><div><span>Отложено в этом месяце</span><b class="num">${rub(a)}</b></div><div><span>Потрачено в этом месяце</span><b class="num">${rub(sp)}</b></div>`
       :`<div><span>Отложено${lim?' из '+rub(lim):''}</span><b class="num">${rub(a)}</b></div><div><span>Потрачено</span><b class="num">${rub(sp)}</b></div><div><span>На руках</span><b class="num ${left<0?'neg':''}">${left<0?'−':''}${rub(Math.abs(left))}</b></div>`}</div>
-    <p class="hint">${isSave(c)?'Копилка без лимита: всё, что отложено, копится из месяца в месяц.':monthName(key)+'. В новом месяце конверт начинается с нуля.'}</p>
+    <p class="hint">${isSave(c)?'У каждого месяца свои конверты: в новом бюджете конверт начинается с нуля.':monthName(key)+'. В новом месяце конверт начинается с нуля.'}</p>
     <div class="actions"><button class="primary" id="v-add">Пополнить</button>
       ${left>0?`<button class="secondary" id="v-reset">Обнулить копилку</button><p class="hint" style="text-align:center">Накопленные ${rub(left)} спишутся, копилка начнётся с нуля</p>`:''}</div>`,
   panel=>{panel.onclick=e=>{
