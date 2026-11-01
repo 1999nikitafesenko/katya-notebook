@@ -666,7 +666,7 @@ function viewMoney(){
   const cats=getCats(),{alloc}=getAlloc(key),mTax=monthTax(prev),tax=taxDue(),C=collected(key);
   const mi=k=>+k.slice(5)-1;
   let h=`<div class="top"><h1>Деньги</h1><div class="month">
-    <button class="icon-btn" data-act="m-prev" aria-label="Прошлый месяц">‹</button><span>${monthName(key)}</span>
+    <button class="icon-btn" data-act="m-prev" aria-label="Прошлый месяц">‹</button><span>${monthName(prev)}</span>
     <button class="icon-btn" data-act="m-next" aria-label="Следующий месяц" ${isNext?'disabled':''}>›</button></div></div>
   <section class="summary"><div class="label">Бюджет на ${MONTHS[mi(key)].toLowerCase()}</div>
     <div class="big num">${rub(C.inc)}</div>
