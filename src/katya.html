@@ -534,7 +534,12 @@ const Back={
     }
     render();
   },
-  saveLocal(){try{localStorage.setItem(LS_KEY,JSON.stringify(S.data))}catch(e){toast('Не удалось сохранить на телефоне. Сохраните резервную копию.')}},
+  saveLocal(){
+    const body=JSON.stringify(S.data);
+    for(let tries=0;tries<8;tries++){
+      try{localStorage.setItem(LS_KEY,body);return}catch(e){const old=snapKeys().pop();if(!old)break;try{localStorage.removeItem(old)}catch(_){}}
+    }
+    try{localStorage.setItem(LS_KEY,body)}catch(e){toast('Не удалось сохранить на телефоне. Сохраните резервную копию.')}},
   write(path,fn){
     this.queue[path]=(this.queue[path]||Promise.resolve()).then(fn).catch(e=>{
       toast(e&&e.code==='invalid_argument'?'Нет прав на изменение. Попросите доступ «Редактор».':'Не сохранилось, проверьте интернет.');
@@ -1842,7 +1847,7 @@ function autoSnapshot(){
     const has=Object.keys(S.data.tx).length+Object.keys(S.data.clients).length+Object.keys(S.data.tasks).length+Object.keys(S.data.notes||{}).length;
     const k=SNAP+today();if(!has||localStorage.getItem(k))return;
     localStorage.setItem(k,JSON.stringify({savedAt:Date.now(),data:S.data}));
-    snapKeys().slice(7).forEach(x=>localStorage.removeItem(x));
+    snapKeys().slice(5).forEach(x=>localStorage.removeItem(x));
   }catch(e){}
 }
 const lastBackup=()=>{try{return +localStorage.getItem(LS_KEY+':backup')||0}catch(e){return 0}};
@@ -1872,11 +1877,11 @@ async function saveBackup(){
 
 /* ---------- sheet & toast ---------- */
 function openSheet(html,mount){
-  S.sheetClose=null;
-  const p=$('#panel');p.classList.remove('full');p.onclick=null;p.oninput=null;p.onchange=null;p.onsubmit=null;
+  S.sheetClose=null;$('#edbar').hidden=true;
+  const p=$('#panel');p.style.transform='';p.style.transition='';p.classList.remove('full');p.onclick=null;p.oninput=null;p.onchange=null;p.onsubmit=null;
   p.innerHTML='<div class="grab"></div>'+html;$('#sheet').hidden=false;mount&&mount(p);
 }
-function closeSheet(){if(S.sheetClose){const f=S.sheetClose;S.sheetClose=null;f()}$('#sheet').hidden=true;$('#panel').innerHTML='';if(S.dirty)render()}
+function closeSheet(){if(S.sheetClose){const f=S.sheetClose;S.sheetClose=null;try{f()}catch(e){}}$('#edbar').hidden=true;$('#sheet').hidden=true;$('#panel').innerHTML='';if(S.dirty)render()}
 let toastT;
 function toast(msg,action,fn){
   const el=$('#toast');clearTimeout(toastT);
@@ -1900,7 +1905,10 @@ function toast(msg,action,fn){
 
   const sheet=$('#sheet'),panel=$('#panel');let y0=null,xs=0,dy=0,t0=0,drag=false;
   const skip=el=>el.closest('input,textarea,select,[contenteditable="true"],.cc-sw,.rt-bar,.palette-row');
+  const resetDrag=()=>{drag=false;y0=null;panel.style.transform='';panel.style.transition='';const sc=sheet.querySelector('.scrim');sc.style.opacity='';sc.style.transition=''};
+  panel.addEventListener('touchcancel',resetDrag);
   panel.addEventListener('touchstart',e=>{
+    if(drag)resetDrag();
     if(skip(e.target)&&!e.target.closest('.grab')){y0=null;return}
     y0=e.touches[0].clientY;xs=e.touches[0].clientX;dy=0;drag=false;t0=Date.now();
   },{passive:true});
