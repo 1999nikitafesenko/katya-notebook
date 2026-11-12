@@ -176,7 +176,8 @@ h2{font-size:13px;font-weight:600;text-transform:uppercase;letter-spacing:.06em;
 #edbar > button{width:44px;height:40px;border:0;background:none;border-radius:10px;color:var(--ink);display:grid;place-items:center;padding:0}
 #edbar > button svg{width:24px;height:24px}
 #edbar > button.ok{margin-left:auto;width:auto;padding:0 16px;background:var(--accent-soft);color:var(--accent);font-weight:700;font-size:16px}
-#edbar.add > [data-eb="color"],#edbar.add > [data-eb="done"],#edbar.add > [data-eb="del"]{opacity:.3}
+#edbar.add > [data-eb="color"],#edbar.add > [data-eb="done"],#edbar.add > [data-eb="del"],#edbar.add > [data-eb="up"],#edbar.add > [data-eb="down"]{opacity:.3}
+#edbar > button{width:40px}
 #edbar .pal{position:absolute;left:0;right:0;bottom:100%;display:flex;flex-wrap:wrap;gap:10px;padding:10px 14px;background:var(--surface);border-top:1px solid var(--line)}
 #edbar .pal button{width:30px;height:30px;border-radius:50%;border:0;background:var(--c);padding:0}
 .pill-btn{border:0;border-radius:999px;background:var(--accent);color:var(--accent-ink);font-weight:600;padding:9px 16px;font-size:15px}
@@ -465,6 +466,8 @@ h2{font-size:13px;font-weight:600;text-transform:uppercase;letter-spacing:.06em;
 <div class="toast" id="toast" hidden></div>
 <div id="edbar" hidden><div class="pal" hidden></div>
   <button data-eb="color" aria-label="Цвет маркера"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="m14.5 4.5 5 5L10 19H5v-5z"/><path d="M4 22h16" stroke="var(--accent)" stroke-width="3"/></svg></button>
+  <button data-eb="up" aria-label="Переместить выше"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 19V5M6 11l6-6 6 6"/></svg></button>
+  <button data-eb="down" aria-label="Переместить ниже"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14M6 13l6 6 6-6"/></svg></button>
   <button data-eb="undo" aria-label="Отменить"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M9 14 4 9l5-5"/><path d="M4 9h10.5a5.5 5.5 0 0 1 0 11H11"/></svg></button>
   <button data-eb="done" aria-label="Отметить сделанным"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m5 12.5 4.5 4.5L19 7.5"/></svg></button>
   <button data-eb="del" aria-label="Удалить"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 7h16M10 11v6M14 11v6M6 7l1 13h10l1-13M9 7V4h6v3"/></svg></button>
@@ -1543,7 +1546,25 @@ function openDay(startDay){
       const a=b.dataset.eb,ev=curId&&S.data.tasks[curId];
       if(a==='ok'){document.activeElement&&document.activeElement.blur();bar.hidden=true}
       else if(a==='undo'){const u=undo.pop();if(!u){toast('Отменять нечего');return}
-        if(u.prev)Back.put('tasks',u.id,u.prev);else Back.del('tasks',u.id);bar.hidden=true;draw()}
+        for(const x of u.group||[u])x.prev?Back.put('tasks',x.id,x.prev):Back.del('tasks',x.id);bar.hidden=true;draw()}
+      else if((a==='up'||a==='down')&&ev){
+        // swap with the neighbour; past the edge of a part, hop to the next part of the day
+        const id=ev.id,part=partOf(ev),off=dayParts(s)[0][0]==='all';
+        const list=itemsIn(eventsOn(s),part),i=list.findIndex(e=>e.id===id),j=a==='up'?i-1:i+1;
+        const group=[],set=(e,ch)=>{group.push({id:e.id,prev:{...S.data.tasks[e.id]}});Back.put('tasks',e.id,{...S.data.tasks[e.id],...ch})};
+        if(list.some(e=>e.ord==null))list.forEach((e,k)=>{if(e.ord!==(k+1)*1000)set(e,{ord:(k+1)*1000,part:partOf(e)});e.ord=(k+1)*1000});
+        if(j>=0&&j<list.length){const o=list[j].ord;set(list[j],{ord:list[i].ord,part:partOf(list[j])});set(ev,{ord:o,part})}
+        else{
+          const ks=PARTS.map(x=>x[0]),pi=ks.indexOf(part)+(a==='up'?-1:1);
+          if(off||pi<0||pi>=ks.length){toast(a==='up'?'Выше некуда':'Ниже некуда');return}
+          const other=itemsIn(eventsOn(s),ks[pi]);
+          if(other.some(e=>e.ord==null))other.forEach((e,k)=>{if(e.ord!==(k+1)*1000)set(e,{ord:(k+1)*1000,part:partOf(e)});e.ord=(k+1)*1000});
+          const ords=other.map(e=>e.ord);
+          set(ev,{part:ks[pi],ord:a==='up'?(ords.length?Math.max(...ords)+1000:(other.length+1)*1000):(ords.length?Math.min(...ords)-1000:-1000)});
+        }
+        undo.push({group});draw();
+        const f=box.querySelector(`[data-edit="${id}"]`);if(f){f.focus();const r=document.createRange();r.selectNodeContents(f);r.collapse(false);const sl=getSelection();sl.removeAllRanges();sl.addRange(r)}
+      }
       else if(!ev)return;
       else if(a==='color')bar.querySelector('.pal').hidden=!bar.querySelector('.pal').hidden;
       else if(b.dataset.c){snap(ev.id);Back.put('tasks',ev.id,{...ev,color:b.dataset.c,part:partOf(ev)});row()?.style.setProperty('--c',evColor(b.dataset.c));bar.querySelector('.pal').hidden=true}
