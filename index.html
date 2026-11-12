@@ -1482,7 +1482,7 @@ function weekView(){
     <div class="wk-grid"><div class="wk-col">${[0,1,2].map(card).join('')}</div><div class="wk-col">${[3,4,5,6].map(card).join('')}<button class="wk-copy" data-act="week-copy" data-ws="${ws}">Повторить неделю</button></div></div>`;
 }
 function openDay(startDay){
-  let s=startDay,colorFor=null,noteDay=null,insertAfter=null; // noteDay: the date whose note is in the editor right now
+  let s=startDay,colorFor=null,noteDay=null,insertAfter=null,insertBefore=null; // noteDay: the date whose note is in the editor right now
   openSheet('<div id="dd"></div>',panel=>{
     panel.classList.add('full');
     const box=panel.querySelector('#dd');
@@ -1508,9 +1508,11 @@ function openDay(startDay){
         if(l)h+=`<div class="pline pp2">${l}</div>`;
         let n=0;
         it.forEach(e=>{const dn=isDone(e,s),j=n++;
+          // Enter at the start of a line pushes it down and opens a fresh line in its place
+          if(insertBefore===e.id){h+=`<div class="pline add ins"><span class="pchk ghost"></span><span class="pn">${j+1})</span><span class="pt"><span class="ed" contenteditable="true" spellcheck="false" data-addp="${k}" data-before="${esc(e.id)}" data-ph=""></span></span></div>`;n++}
           h+=`<div class="pline ${dn?'done':''}" style="--c:${evColor(e.color)}">
             <button class="pchk ${dn?'on':''}" data-dtoggle="${esc(e.id)}" aria-label="${dn?'Снять отметку':'Отметить сделанным'}">${dn?'✓':''}</button>
-            <span class="pn">${j+1})</span><span class="pt"><span class="hl ed" contenteditable="true" spellcheck="false" data-edit="${esc(e.id)}">${esc(itemText(e))}</span></span></div>`;
+            <span class="pn">${insertBefore===e.id?j+2:j+1})</span><span class="pt"><span class="hl ed" contenteditable="true" spellcheck="false" data-edit="${esc(e.id)}">${esc(itemText(e))}</span></span></div>`;
           // Enter at the end of a line opens a fresh line right below it
           if(insertAfter===e.id)h+=`<div class="pline add ins"><span class="pchk ghost"></span><span class="pn">${++n})</span><span class="pt"><span class="ed" contenteditable="true" spellcheck="false" data-addp="${k}" data-after="${esc(e.id)}" data-ph=""></span></span></div>`;
         });
@@ -1532,13 +1534,14 @@ function openDay(startDay){
     };
     const commitAdd=el=>{
       const v=parseLine(el.textContent);if(!v.title&&!v.time)return false;
-      const after=el.dataset.after&&S.data.tasks[el.dataset.after];
-      const part=after?partOf(after):el.dataset.addp==='all'?'day':el.dataset.addp;
+      const after=el.dataset.after&&S.data.tasks[el.dataset.after],before=el.dataset.before&&S.data.tasks[el.dataset.before];
+      const part=after?partOf(after):before?partOf(before):el.dataset.addp==='all'?'day':el.dataset.addp;
       const list=itemsIn(eventsOn(s),part);let ord;
-      if(after){
+      if(after||before){
         // number the part once so the new line can sit between two others
         if(list.some(e=>e.ord==null))list.forEach((e,i)=>{if(e.ord!==(i+1)*1000)Back.put('tasks',e.id,{...e,ord:(i+1)*1000,part:partOf(e)});e.ord=(i+1)*1000});
-        const i=list.findIndex(e=>e.id===after.id),a=list[i].ord,b=list[i+1]?list[i+1].ord:a+2000;ord=(a+b)/2;
+        if(after){const i=list.findIndex(e=>e.id===after.id),a=list[i].ord,b=list[i+1]?list[i+1].ord:a+2000;ord=(a+b)/2}
+        else{const i=list.findIndex(e=>e.id===before.id),b=list[i].ord,a=list[i-1]?list[i-1].ord:b-2000;ord=(a+b)/2}
       }else if(list.some(e=>e.ord!=null))ord=Math.max(...list.map(e=>e.ord||0))+1000;
       const nid=uid();undo.push({id:nid,prev:null});
       const rec={title:v.title,date:s,time:v.time,timeEnd:'',part,color:'def',repeat:{freq:'none'},reminder:'none',notes:'',done:false,createdAt:Date.now()};
@@ -1546,7 +1549,8 @@ function openDay(startDay){
       Back.put('tasks',nid,rec);
       return nid;
     };
-    const focusIns=()=>{const f=box.querySelector('[data-after]');if(f)f.focus()};
+    const focusIns=()=>{const f=box.querySelector('[data-after],[data-before]');if(f)f.focus()};
+    const caretAtStart=el=>{const sl=getSelection();if(!sl.rangeCount)return false;const r=sl.getRangeAt(0);if(!r.collapsed)return false;const pre=document.createRange();pre.selectNodeContents(el);pre.setEnd(r.startContainer,r.startOffset);return pre.toString().length===0};
     draw();
     // toolbar above the keyboard while a line is being edited: marker, undo, done, delete, OK
     const bar=$('#edbar');let curId=null;
@@ -1570,14 +1574,17 @@ function openDay(startDay){
     box.addEventListener('keydown',e=>{
       const t=e.target;if(e.key!=='Enter'||!t.classList||!t.classList.contains('ed'))return;
       e.preventDefault();
-      if(t.dataset.after){t.dataset.done='1';insertAfter=commitAdd(t)||null;draw();focusIns();return}
+      if(t.dataset.after||t.dataset.before){t.dataset.done='1';insertAfter=commitAdd(t)||null;insertBefore=null;draw();focusIns();return}
       if(t.dataset.addp){const k=t.dataset.addp;t.dataset.done='1';if(commitAdd(t))draw(k)}
-      else{t.dataset.done='1';commitEdit(t);insertAfter=t.dataset.edit;draw();focusIns()}
+      else{t.dataset.done='1';const id=t.dataset.edit;
+        if(t.textContent.trim()&&caretAtStart(t)){commitEdit(t);insertBefore=id;insertAfter=null}
+        else{commitEdit(t);insertAfter=id;insertBefore=null}
+        draw();focusIns()}
     });
     box.addEventListener('focusout',e=>{
       const t=e.target;if(!t.classList||!t.classList.contains('ed')||t.dataset.done)return;
-      if(t.dataset.after&&!t.textContent.trim()){insertAfter=null;setTimeout(()=>{const a=document.activeElement;if(!(a&&a.classList&&a.classList.contains('ed')))draw()},0);return}
-      if(t.dataset.addp){if(t.dataset.after)insertAfter=null;if(commitAdd(t))setTimeout(()=>{if(!box.contains(document.activeElement)||document.activeElement===document.body)draw()},0)}
+      if((t.dataset.after||t.dataset.before)&&!t.textContent.trim()){insertAfter=null;insertBefore=null;setTimeout(()=>{const a=document.activeElement;if(!(a&&a.classList&&a.classList.contains('ed')))draw()},0);return}
+      if(t.dataset.addp){if(t.dataset.after||t.dataset.before){insertAfter=null;insertBefore=null}if(commitAdd(t))setTimeout(()=>{if(!box.contains(document.activeElement)||document.activeElement===document.body)draw()},0)}
       else if(commitEdit(t))setTimeout(()=>draw(),0);
     });
     box.addEventListener('paste',e=>{
@@ -1588,8 +1595,8 @@ function openDay(startDay){
       const b=e.target.closest('[data-dtoggle],[data-dcolor],[data-setc],[data-dmore],[data-ddel],[data-dclose],[data-dgo],[data-dweek]');if(!b)return;
       const ds=b.dataset;
       if(ds.dtoggle){snap(ds.dtoggle);toggleEvent(ds.dtoggle,s);draw()}
-      else if(ds.dgo){s=ds.dgo;colorFor=null;insertAfter=null;draw();panel.scrollTop=0}
-      else if(ds.dweek){const x=parseDay(s);x.setDate(x.getDate()+ +ds.dweek);s=ymd(x);colorFor=null;insertAfter=null;draw()}
+      else if(ds.dgo){s=ds.dgo;colorFor=null;insertAfter=null;insertBefore=null;draw();panel.scrollTop=0}
+      else if(ds.dweek){const x=parseDay(s);x.setDate(x.getDate()+ +ds.dweek);s=ymd(x);colorFor=null;insertAfter=null;insertBefore=null;draw()}
       else if(ds.dcolor){colorFor=colorFor===ds.dcolor?null:ds.dcolor;draw()}
       else if(ds.setc){const ev=S.data.tasks[ds.cfor];if(ev)Back.put('tasks',ds.cfor,{...ev,color:ds.setc,part:partOf(ev)});colorFor=null;draw()}
       else if(ds.dmore){saveNote();S.sheetClose=null;closeSheet();openEvent(ds.dmore,s)}
