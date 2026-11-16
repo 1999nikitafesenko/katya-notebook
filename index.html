@@ -410,6 +410,46 @@ h2{font-size:13px;font-weight:600;text-transform:uppercase;letter-spacing:.06em;
 .tab[aria-current="page"]{color:var(--accent)}
 .fab{position:fixed;z-index:19;right:max(16px,calc(env(safe-area-inset-right,0px) + 16px));bottom:calc(82px + env(safe-area-inset-bottom,0px));width:58px;height:58px;border-radius:50%;border:0;background:var(--accent);color:var(--accent-ink);font-size:32px;line-height:1;box-shadow:0 8px 24px color-mix(in srgb,var(--accent) 40%,transparent)}
 @media (min-width:640px){.fab{right:calc(50% - 280px + 16px)}}
+/* tablet (Xiaomi Pad and similar): wider columns, the planner fills the screen */
+@media (min-width:760px){
+  body{font-size:17px}
+  .app{max-width:820px;padding-block:18px calc(104px + env(safe-area-inset-bottom,0px))}
+  .app[data-tab="tasks"]{max-width:1240px}
+  .tabbar .in{max-width:820px;grid-template-columns:repeat(4,1fr) 56px}
+  .tab{font-size:14px}
+  .tab svg{width:28px;height:28px}
+  .fab{right:calc(50% - 410px + 16px)}
+  .panel{max-width:760px}
+  .panel.full{max-width:1000px}
+  h1{font-size:34px}
+  .top-cal .seg-v{max-width:420px;margin:0 auto}
+  .top-cal .seg-v button{padding:7px;font-size:15px}
+  .week-head .icon-btn{width:38px;height:38px}
+  .week-head .wk-title b{font-size:17px}
+  .wk-grid,.wk-col{gap:12px}
+  .pday-h{font-size:16px;padding:7px 12px}
+  .pday-b{height:calc((100dvh - 300px) / 3 - 40px);min-height:150px;font-size:14px;line-height:24px;background-image:repeating-linear-gradient(to bottom,transparent 0 23px,var(--paper-line) 23px 24px)}
+  .pp{font-size:12px;height:24px}
+  .pl{height:24px}
+  .pl .pchk{width:15px;height:15px;font-size:10px}
+  .pday-off{font-size:16px}
+  .pnote{font-size:14px;line-height:24px;max-height:96px}
+  .wk-copy{font-size:15px;padding:10px}
+  .dayc{min-height:110px;font-size:15px;padding:5px 4px}
+  .dayc .dn{width:30px;height:30px}
+  .lbl{font-size:12px;line-height:18px;padding:0 5px}
+  .pline{height:36px;font-size:19px;line-height:36px}
+  .paper{background-image:repeating-linear-gradient(to bottom,transparent 0 35px,var(--paper-line) 35px 36px)}
+  .ws b{font-size:22px}
+}
+/* tablet on its side: the week as a 4 × 2 spread, Mon–Thu on top, Fri–Sun below */
+@media (min-width:1000px) and (orientation:landscape){
+  .wk-grid{grid-template-columns:repeat(4,minmax(0,1fr));align-items:stretch}
+  .wk-col{display:contents}
+  .pday,.pday.short{display:flex;flex-direction:column}
+  .pday-b,.pday.short .pday-b{flex:none;height:calc((100dvh - 260px) / 2 - 40px);min-height:120px}
+  .wk-copy{align-self:end}
+}
 
 /* sheet */
 .sheet{position:fixed;inset:0;z-index:40;display:flex;align-items:flex-end;justify-content:center}
@@ -669,6 +709,7 @@ function render(force){
   bn.hidden=!(S.mode==='local'&&hasData&&(!last||Date.now()-last>7*864e5));
   if(!bn.hidden)bn.innerHTML=`${last?'Последняя резервная копия '+when(last)+'.':'Резервной копии ещё не было.'} Все данные хранятся только на этом телефоне. <button class="link-btn" data-act="backup-save" style="padding:2px 0;color:inherit;text-decoration:underline">Сохранить копию</button>`;
   const keep={};document.querySelectorAll('.pday-b').forEach(b=>keep[b.dataset.sday]=b.scrollTop);
+  document.querySelector('.app').dataset.tab=S.tab;
   $('#view').innerHTML=S.tab==='money'?viewMoney():S.tab==='clients'?viewClients():S.tab==='notes'?viewNotes():viewTasks();
   document.querySelectorAll('.pday-b').forEach(b=>{if(keep[b.dataset.sday])b.scrollTop=keep[b.dataset.sday];updMore(b)});
 }
