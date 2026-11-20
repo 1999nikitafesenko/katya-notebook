@@ -568,6 +568,21 @@ const S={
 try{const t=localStorage.getItem(LS_KEY+':tab');if(['money','clients','tasks','notes'].includes(t))S.tab=t;if(localStorage.getItem(LS_KEY+':cal')==='week')S.calView='week'}catch(e){}
 
 /* ---------- storage: shared db when available, otherwise this browser ---------- */
+/* ---------- cloud sync (Firebase): one account on phone and tablet, works offline and catches up later ---------- */
+const FB_CONFIG={apiKey:'AIzaSyBHezE3d3VUDIZ_2eBZuuw3vL0S4BYQ_z0',authDomain:'katenotebooke.firebaseapp.com',projectId:'katenotebooke',storageBucket:'katenotebooke.firebasestorage.app',messagingSenderId:'68967488571',appId:'1:68967488571:web:0d7086ef8bea041da3901e'};
+const SYNC_COLS=['tx','clients','tasks','alloc','workouts','daynotes','notes','dayoff'];
+const loadScript=src=>new Promise((ok,no)=>{const el=document.createElement('script');el.src=src;el.onload=ok;el.onerror=no;document.head.appendChild(el)});
+let fbReady=null;
+function loadFirebase(){
+  if(!fbReady)fbReady=(async()=>{
+    for(const m of ['app','auth','firestore'])await loadScript(`vendor/firebase-${m}-compat.js`);
+    firebase.initializeApp(FB_CONFIG);
+    try{await firebase.firestore().enablePersistence({synchronizeTabs:true})}catch(e){}
+    return true;
+  })().catch(()=>{fbReady=null;return false});
+  return fbReady;
+}
+const clean=o=>JSON.parse(JSON.stringify(o));
 const Back={
   db:null, queue:{},
   async init(){
@@ -588,8 +603,46 @@ const Back={
       try{const raw=localStorage.getItem(LS_KEY);if(raw)Object.assign(S.data,JSON.parse(raw))}catch(e){}
       autoSnapshot();
       try{navigator.storage&&navigator.storage.persist&&navigator.storage.persist()}catch(e){}
+      this.connect();
     }
     render();
+  },
+  async connect(){
+    if(!(await loadFirebase())){addEventListener('online',()=>this.connect(),{once:true});return}
+    firebase.auth().onAuthStateChanged(u=>{S.user=u?u.email:null;if(u&&!this.cloud)this.startCloud(u);render()});
+  },
+  async startCloud(user){
+    const fs=firebase.firestore(),base='users/'+user.uid;
+    const db={collection:c=>fs.collection(base+'/'+c),doc:p=>fs.doc(base+'/'+p)};
+    let meta;
+    try{meta=await db.doc('settings/meta').get()}catch(e){toast('Синхронизация начнётся, когда появится интернет');addEventListener('online',()=>{if(!this.cloud)this.startCloud(user)},{once:true});return}
+    this.db=db;this.cloud=true;S.mode='cloud';
+    if(!meta.exists){await this.uploadAll();db.doc('settings/meta').set({createdAt:Date.now(),from:navigator.userAgent.slice(0,80)})}
+    else{try{if(!localStorage.getItem(LS_KEY+':synced'))localStorage.setItem(SNAP+'before-sync',JSON.stringify({savedAt:Date.now(),data:S.data}))}catch(e){}}
+    try{localStorage.setItem(LS_KEY+':synced','1')}catch(e){}
+    let t;const mirror=()=>{clearTimeout(t);t=setTimeout(()=>this.saveLocal(),800)};
+    for(const col of SYNC_COLS)db.collection(col).onSnapshot(snap=>{
+      const m={};snap.docs.forEach(d=>{m[d.id]={...d.data(),id:d.id}});S.data[col]=m;render();mirror();
+    },e=>toast('Синхронизация: нет доступа ('+(e.code||'ошибка')+')'));
+    db.doc('settings/budget').onSnapshot(x=>{S.data.budget=x.exists?x.data():null;render();mirror()},()=>{});
+    db.doc('settings/flow').onSnapshot(x=>{S.data.flow=x.exists?x.data():null;render();mirror()},()=>{});
+    render();
+  },
+  // push everything on this device to the cloud (first sign-in, restore from a copy)
+  async uploadAll(){
+    const fs=firebase.firestore(),ops=[];
+    for(const col of SYNC_COLS)for(const [id,v] of Object.entries(S.data[col]||{})){const b={...v};delete b.id;ops.push([col+'/'+id,clean(b)])}
+    if(S.data.budget)ops.push(['settings/budget',clean(S.data.budget)]);
+    if(S.data.flow)ops.push(['settings/flow',clean(S.data.flow)]);
+    for(let i=0;i<ops.length;i+=400){const b=fs.batch();ops.slice(i,i+400).forEach(([p,v])=>b.set(this.db.doc(p),v));b.commit().catch(()=>{})}
+  },
+  // replace all data (restore from a copy): in the cloud, drop records the copy does not have
+  replaceAll(data){
+    if(this.cloud){
+      for(const col of SYNC_COLS)for(const id of Object.keys(S.data[col]||{}))if(!(data[col]||{})[id])this.write('x',()=>this.db.doc(col+'/'+id).delete());
+      S.data=data;this.uploadAll();
+    }else S.data=data;
+    this.saveLocal();
   },
   saveLocal(){
     const body=JSON.stringify(S.data);
@@ -598,6 +651,8 @@ const Back={
     }
     try{localStorage.setItem(LS_KEY,body)}catch(e){toast('Не удалось сохранить на телефоне. Сохраните резервную копию.')}},
   write(path,fn){
+    // Firestore orders writes itself and applies them to its offline cache at once, so no queue in the cloud
+    if(this.cloud){Promise.resolve().then(fn).catch(e=>toast(e&&e.code==='permission-denied'?'Синхронизация: нет доступа, войдите заново':'Не сохранилось в облако'));return}
     this.queue[path]=(this.queue[path]||Promise.resolve()).then(fn).catch(e=>{
       toast(e&&e.code==='invalid_argument'?'Нет прав на изменение. Попросите доступ «Редактор».':'Не сохранилось, проверьте интернет.');
     });
@@ -606,12 +661,12 @@ const Back={
     const body={...obj};delete body.id;
     S.data[col]={...S.data[col],[id]:{...body,id}};
     render();
-    if(this.db) this.write(col+'/'+id,()=>this.db.doc(col+'/'+id).set(body));
+    if(this.db) this.write(col+'/'+id,()=>this.db.doc(col+'/'+id).set(clean(body)));
     else this.saveLocal();
   },
   putMany(col,items){
     const m={...S.data[col]};for(const [id,obj] of items)m[id]={...obj,id};S.data[col]=m;render();
-    if(this.db) for(const [id,obj] of items) this.write('bulk:'+col,()=>this.db.doc(col+'/'+id).set(obj));
+    if(this.db) for(const [id,obj] of items) this.write('bulk:'+col,()=>this.db.doc(col+'/'+id).set(clean(obj)));
     else this.saveLocal();
   },
   del(col,id){
@@ -630,12 +685,12 @@ const Back={
   },
   putFlow(f){
     S.data.flow=f;render(true);
-    if(this.db) this.write('settings/flow',()=>this.db.doc('settings/flow').set(f));
+    if(this.db) this.write('settings/flow',()=>this.db.doc('settings/flow').set(clean(f)));
     else this.saveLocal();
   },
   putBudget(b){
     S.data.budget=b;render();
-    if(this.db) this.write('settings/budget',()=>this.db.doc('settings/budget').set(b));
+    if(this.db) this.write('settings/budget',()=>this.db.doc('settings/budget').set(clean(b)));
     else this.saveLocal();
   }
 };
@@ -1829,7 +1884,17 @@ function openSkin(){
   const cur=document.documentElement.dataset.skin||'pudra';
   const last=lastBackup();
   const tone=getTone();
-  openSheet(`<h3>Настройки</h3><h2 style="margin-top:0">Оформление</h2>
+  const sync=S.mode==='db'?'':S.user?`<h2 style="margin-top:0">Синхронизация</h2>
+      <div class="group stats"><div><span>Вход выполнен</span><b>${esc(S.user)}</b></div><div><span>Состояние</span><b>${S.mode==='cloud'?(navigator.onLine?'✓ синхронизировано':'нет сети, отправится позже'):'подключается…'}</b></div></div>
+      <p class="hint">Войдите под этой же почтой на другом устройстве, и данные будут одинаковые.</p>
+      <div class="actions" style="margin-top:4px"><button class="neutral" id="sy-out">Выйти из аккаунта</button></div>`
+    :`<h2 style="margin-top:0">Синхронизация</h2>
+      <p class="hint" style="margin:0 4px 8px">Один аккаунт на телефоне и планшете, и данные везде одинаковые. Без интернета всё сохраняется и отправится, когда сеть появится.</p>
+      <label class="field"><input id="sy-mail" type="email" autocomplete="username" placeholder="Почта"></label>
+      <label class="field"><input id="sy-pass" type="password" autocomplete="current-password" placeholder="Пароль (от 6 символов)"></label>
+      <div class="row2"><button class="primary" id="sy-in">Войти</button><button class="neutral" id="sy-new">Создать аккаунт</button></div>
+      <p class="hint">Первое устройство, на котором вы войдёте, отправит свои записи в облако. На следующих устройствах записи заменятся данными из облака, а прежние сохранятся в автокопию.</p>`;
+  openSheet(`<h3>Настройки</h3>${sync}<h2${sync?'':' style="margin-top:0"'}>Оформление</h2>
     <div class="tone"><label for="tone-bg"><span>Фон</span><small>светлее · темнее</small></label><input type="range" id="tone-bg" min="0" max="200" step="5" value="${tone.bg}">
       <label for="tone-sat"><span>Насыщенность</span><small>спокойнее · ярче</small></label><input type="range" id="tone-sat" min="0" max="200" step="5" value="${tone.sat||100}">
       <label for="tone-card"><span>Карточки</span><small>белые · цветные</small></label><input type="range" id="tone-card" min="0" max="100" step="5" value="${tone.card==null?15:tone.card}">
@@ -1843,7 +1908,7 @@ function openSkin(){
     <div class="cc-prev"><div class="cc-app"><span>Бюджет октября</span><b>120 000 ₽</b></div><div class="cc-card"><b>Понедельник 19</b><span>УТРО</span><span>1) 08.30 Ирина</span><span></span></div><div class="cc-card"><b>Четверг 22</b><span>ДЕНЬ</span><span>1) аренда</span><span></span></div></div>
     ${ccRow('bg')}${ccRow('head')}${ccRow('paper')}
     <p class="hint">Цвета действуют во всём приложении, поверх темы. Фон и карточки меняются в светлом режиме телефона, в тёмном остаются тёмными. Заголовки дней и листы в «Делах» светлые всегда, как бумага.</p>
-    ${S.mode==='local'?`<h2>Резервная копия</h2>
+    ${S.mode!=='db'?`<h2>Резервная копия</h2>
     <div class="group stats"><div><span>Последняя копия</span><b>${last?when(last):'ещё не было'}</b></div></div>
     <p class="hint">Все данные хранятся только на этом телефоне. Сохраняйте копию раз в неделю и отправляйте её себе в Telegram или в «Файлы»: если телефон потеряется или сбросится, из копии всё вернётся.</p>
     <div class="actions"><button class="primary" data-act="backup-save">Сохранить копию</button>
@@ -1871,17 +1936,30 @@ function openSkin(){
         box.innerHTML=`<button class="secondary" id="b-apply">Заменить все данные копией ${esc(when(bk.savedAt))}</button><p class="hint">Текущие данные на телефоне будут заменены.</p>`;
         box.querySelector('#b-apply').onclick=ev=>{
           if(!ev.target.classList.contains('armed')){ev.target.classList.add('armed');ev.target.textContent='Нажмите ещё раз для подтверждения';return}
-          S.data={tx:{},clients:{},tasks:{},alloc:{},workouts:{},daynotes:{},dayoff:{},budget:null,flow:null,...bk.data};
-          Back.saveLocal();closeSheet();render(true);toast('Данные восстановлены из копии');
+          Back.replaceAll({tx:{},clients:{},tasks:{},alloc:{},workouts:{},daynotes:{},notes:{},dayoff:{},budget:null,flow:null,...bk.data});
+          closeSheet();render(true);toast('Данные восстановлены из копии');
         };
       };r.readAsText(e.target.files[0]);
     };
     panel.onclick=e=>{
+      if(e.target.id==='sy-in'||e.target.id==='sy-new'){
+        const mail=panel.querySelector('#sy-mail').value.trim(),pass=panel.querySelector('#sy-pass').value;
+        if(!mail||pass.length<6){toast('Введите почту и пароль от 6 символов');return}
+        if(!window.firebase||!firebase.auth){toast('Нужен интернет для входа');Back.connect();return}
+        const go=e.target.id==='sy-in'?firebase.auth().signInWithEmailAndPassword(mail,pass):firebase.auth().createUserWithEmailAndPassword(mail,pass);
+        e.target.disabled=true;
+        go.then(()=>{closeSheet();toast('Синхронизация включена')}).catch(err=>{e.target.disabled=false;
+          const m={'auth/invalid-credential':'Неверная почта или пароль','auth/wrong-password':'Неверный пароль','auth/user-not-found':'Такого аккаунта нет. Нажмите «Создать аккаунт»','auth/email-already-in-use':'Такой аккаунт уже есть. Нажмите «Войти»','auth/weak-password':'Пароль слишком короткий','auth/invalid-email':'Почта написана с ошибкой','auth/network-request-failed':'Нет интернета'};
+          toast(m[err.code]||('Не получилось: '+(err.code||err.message)))});
+        return}
+      if(e.target.id==='sy-out'){
+        if(!e.target.classList.contains('armed')){e.target.classList.add('armed');e.target.textContent='Выйти? Записи останутся на этом устройстве';return}
+        firebase.auth().signOut().then(()=>{try{localStorage.removeItem(LS_KEY+':synced')}catch(_){}location.reload()});return}
       const sn=e.target.closest('[data-snap]');
       if(sn){
         if(!sn.classList.contains('armed')){sn.classList.add('armed');sn.textContent='Точно? Нажмите ещё раз';return}
         try{const bk=JSON.parse(localStorage.getItem(sn.dataset.snap));
-          S.data={tx:{},clients:{},tasks:{},alloc:{},workouts:{},daynotes:{},notes:{},dayoff:{},budget:null,flow:null,...bk.data};Back.saveLocal();
+          Back.replaceAll({tx:{},clients:{},tasks:{},alloc:{},workouts:{},daynotes:{},notes:{},dayoff:{},budget:null,flow:null,...bk.data});
           closeSheet();render(true);toast('Данные возвращены на '+dayTitle(sn.dataset.snap.slice(SNAP.length)))}catch(_){toast('Не удалось прочитать копию')}
         return}
       if(e.target.id==='look-reset'){
