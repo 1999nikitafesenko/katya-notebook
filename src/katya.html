@@ -1870,12 +1870,16 @@ function openSkin(){
   const sync=S.mode==='db'?'':S.user?`<h2 style="margin-top:0">Синхронизация</h2>
       <div class="group stats"><div><span>Вход выполнен</span><b>${esc(S.user)}</b></div><div><span>Состояние</span><b>${S.mode==='cloud'?(navigator.onLine?'✓ синхронизировано':'нет сети, отправится позже'):'подключается…'}</b></div></div>
       <p class="hint">Войдите под этой же почтой на другом устройстве, и данные будут одинаковые.</p>
-      <div class="actions" style="margin-top:4px"><button class="neutral" id="sy-out">Выйти из аккаунта</button></div>`
+      <details class="howto" style="margin-top:4px"><summary>Сменить пароль</summary>
+        <label class="field" style="margin-top:10px"><input id="sy-newpass" type="password" autocomplete="new-password" placeholder="Новый пароль (от 6 символов)"></label>
+        <button class="primary" id="sy-chpass" style="width:100%">Сохранить новый пароль</button></details>
+      <div class="actions" style="margin-top:8px"><button class="neutral" id="sy-out">Выйти из аккаунта</button></div>`
     :`<h2 style="margin-top:0">Синхронизация</h2>
       <p class="hint" style="margin:0 4px 8px">Один аккаунт на телефоне и планшете, и данные везде одинаковые. Без интернета всё сохраняется и отправится, когда сеть появится.</p>
       <label class="field"><input id="sy-mail" type="email" autocomplete="username" placeholder="Почта"></label>
       <label class="field"><input id="sy-pass" type="password" autocomplete="current-password" placeholder="Пароль (от 6 символов)"></label>
       <div class="row2"><button class="primary" id="sy-in">Войти</button><button class="neutral" id="sy-new">Создать аккаунт</button></div>
+      <button class="link-btn" id="sy-forgot" style="padding:8px 4px 0">Забыли пароль?</button>
       <p class="hint">Первое устройство, на котором вы войдёте, отправит свои записи в облако. На следующих устройствах записи заменятся данными из облака, а прежние сохранятся в автокопию.</p>`;
   openSheet(`<h3>Настройки</h3>${sync}<h2${sync?'':' style="margin-top:0"'}>Оформление</h2>
     <div class="tone"><label for="tone-bg"><span>Фон</span><small>светлее · темнее</small></label><input type="range" id="tone-bg" min="0" max="200" step="5" value="${tone.bg}">
@@ -1934,6 +1938,20 @@ function openSkin(){
         go.then(()=>{closeSheet();toast('Синхронизация включена')}).catch(err=>{e.target.disabled=false;
           const m={'auth/invalid-credential':'Неверная почта или пароль','auth/wrong-password':'Неверный пароль','auth/user-not-found':'Такого аккаунта нет. Нажмите «Создать аккаунт»','auth/email-already-in-use':'Такой аккаунт уже есть. Нажмите «Войти»','auth/weak-password':'Пароль слишком короткий','auth/invalid-email':'Почта написана с ошибкой','auth/network-request-failed':'Нет интернета'};
           toast(m[err.code]||('Не получилось: '+(err.code||err.message)))});
+        return}
+      if(e.target.id==='sy-forgot'){
+        const mail=panel.querySelector('#sy-mail').value.trim();
+        if(!mail){toast('Впишите почту, на неё придёт ссылка');panel.querySelector('#sy-mail').focus();return}
+        if(!window.firebase||!firebase.auth){toast('Нужен интернет');Back.connect();return}
+        firebase.auth().languageCode='ru';
+        firebase.auth().sendPasswordResetEmail(mail).then(()=>toast('Письмо отправлено. Откройте ссылку из письма (проверьте «Спам») и задайте новый пароль'))
+          .catch(err=>toast({'auth/user-not-found':'Аккаунта с такой почтой нет','auth/invalid-email':'Почта написана с ошибкой','auth/network-request-failed':'Нет интернета'}[err.code]||('Не получилось: '+err.code)));
+        return}
+      if(e.target.id==='sy-chpass'){
+        const np=panel.querySelector('#sy-newpass').value;
+        if(np.length<6){toast('Пароль от 6 символов');return}
+        firebase.auth().currentUser.updatePassword(np).then(()=>{closeSheet();toast('Пароль изменён. Запомните его для входа на другом устройстве')})
+          .catch(err=>toast(err.code==='auth/requires-recent-login'?'Для смены пароля выйдите и войдите заново (или нажмите «Забыли пароль?»)':(err.code==='auth/network-request-failed'?'Нет интернета':'Не получилось: '+err.code)));
         return}
       if(e.target.id==='sy-out'){
         if(!e.target.classList.contains('armed')){e.target.classList.add('armed');e.target.textContent='Выйти? Записи останутся на этом устройстве';return}
